@@ -52,29 +52,40 @@
 // -- render -> _render -> _render_group(s) -> _render_item(s)
 // - action: wp_after_admin_bar_render
 
-// -------------------------------
-// Abort on Negative Load Constant
-// -------------------------------
+// --- abort on negative load constant ---
 // 0.9.9: standardize loader constant names
-if ( defined( 'ADMINSANITY_LOAD_BAR' ) && !ADMINSANITY_MODULE_LOAD_BAR ) {return;}
+if ( defined( 'ADMINSANITY_LOAD_BAR' ) && !ADMINSANITY_MODULE_LOAD_BAR ) {
+	return;
+}
 
 // --- get frontend override setting ---
 // 0.9.9: added frontend override setting
 if ( !is_admin() ) {
 	$frontend = true;
-	if ( defined( 'ADMINSANITY_BAR_CYCLER_FRONTEND' ) ) {
+	// 1.0.1: fix to frontent constant (remove CYCLER_)
+	if ( defined( 'ADMINSANITY_BAR_FRONTEND' ) ) {
 		$frontend = (bool)ADMINSANITY_BAR_FRONTEND;
-	} elseif ( function_exists( 'adminsanity_get_settings' ) ) {
-		$frontend = (bool)adminsanity_get_settings( 'bar_frontend' );
+	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
+		$frontend = (bool)adminsanity_get_setting( 'bar_frontend' );
 	} else {
 		$frontend = (bool)apply_filters( 'adminsanity_bar_frontend', $frontend );
 	}
-	if ( !$frontend ) {return;}
+	if ( !$frontend ) {
+		return;
+	}
+}
+
+// --- conflict check ---
+// 1.0.1: add check for WooCommerce product attributes page
+if ( isset( $_REQUEST['page'] ) && ( 'product_attributes' == $_REQUEST['page'] ) ) {
+	return;
 }
 
 // --- allow for use as an mu-plugin ---
 // 0.9.9: attempt to prevent double load conflicts
+// 1.0.1: use return instead of function wrapper
 if ( !function_exists( 'adminsanity_bar_default' ) ) {
+
 
 // -------------------------
 // Capture Default Admin Bar
@@ -242,8 +253,8 @@ function adminsanity_bar_replace() {
 	$cycler = true;
 	if ( defined( 'ADMINSANITY_BAR_CYCLER' ) ) {
 		$cycler = (bool)ADMINSANITY_BAR_CYCLER;
-	} elseif ( function_exists( 'adminsanity_get_settings' ) ) {
-		$cycler = (bool)adminsanity_get_settings( 'bar_cycler' );
+	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
+		$cycler = (bool)adminsanity_get_setting( 'bar_cycler' );
 	} else {
 		$cycler = (bool)apply_filters( 'adminsanity_bar_cycler', $cycler );
 	}
@@ -302,8 +313,8 @@ function adminsanity_bar_replace() {
 	$dropdown = true;
 	if ( defined( 'ADMINSANITY_BAR_DROPDOWN' ) ) {
 		$dropdown = (bool)ADMINSANITY_BAR_DROPDOWN;
-	} elseif ( function_exists( 'adminsanity_get_settings' ) ) {
-		$dropdown = (bool)adminsanity_get_settings( 'bar_dropdown' );
+	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
+		$dropdown = (bool)adminsanity_get_setting( 'bar_dropdown' );
 	} else {
 		$dropdown = (bool)apply_filters( 'adminsanity_bar_dropdown', $dropdown );
 	}
@@ -375,8 +386,8 @@ function adminsanity_bar_styles() {
 	$cycler = true;
 	if ( defined( 'ADMINSANITY_BAR_CYCLER' ) ) {
 		$cycler = (bool)ADMINSANITY_BAR_CYCLER;
-	} elseif ( function_exists( 'adminsanity_get_settings' ) ) {
-		$cycler = (bool)adminsanity_get_settings( 'bar_cycler' );
+	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
+		$cycler = (bool)adminsanity_get_setting( 'bar_cycler' );
 	} else {
 		$cycler = (bool)apply_filters( 'adminsanity_bar_cycler', $cycler );
 	}
@@ -386,8 +397,8 @@ function adminsanity_bar_styles() {
 	$dropdown = true;
 	if ( defined( 'ADMINSANITY_BAR_DROPDOWN' ) ) {
 		$dropdown = (bool)ADMINSANITY_BAR_DROPDOWN;
-	} elseif ( function_exists( 'adminsanity_get_settings' ) ) {
-		$dropdown = (bool)adminsanity_get_settings( 'bar_dropdown' );
+	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
+		$dropdown = (bool)adminsanity_get_setting( 'bar_dropdown' );
 	} else {
 		$dropdown = (bool)apply_filters( 'adminsanity_bar_dropdown', $dropdown );
 	}
@@ -491,8 +502,8 @@ function adminsanity_bar_scripts() {
 	$cycler = true;
 	if ( defined( 'ADMINSANITY_BAR_CYCLER' ) ) {
 		$cycler = (bool)ADMINSANITY_BAR_CYCLER;
-	} elseif ( function_exists( 'adminsanity_get_settings' ) ) {
-		$cycler = (bool)adminsanity_get_settings( 'bar_cycler' );
+	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
+		$cycler = (bool)adminsanity_get_setting( 'bar_cycler' );
 	} else {
 		$cycler = (bool)apply_filters( 'adminsanity_bar_cycler', $cycler );
 	}
@@ -502,8 +513,8 @@ function adminsanity_bar_scripts() {
 	$dropdown = true;
 	if ( defined( 'ADMINSANITY_BAR_DROPDOWN' ) ) {
 		$dropdown = (bool)ADMINSANITY_BAR_DROPDOWN;
-	} elseif ( function_exists( 'adminsanity_get_settings' ) ) {
-		$dropdown = (bool)adminsanity_get_settings( 'bar_dropdown' );
+	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
+		$dropdown = (bool)adminsanity_get_setting( 'bar_dropdown' );
 	} else {
 		$dropdown = (bool)apply_filters( 'adminsanity_bar_dropdown', $dropdown );
 	}
@@ -691,5 +702,6 @@ function adminsanity_bar_scripts() {
 	echo "<script>" . $js . "</script>";
 }
 
-// --- close function load wrapper ---
+// --- end function load wrapper ---
 }
+

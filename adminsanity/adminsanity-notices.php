@@ -36,11 +36,15 @@
 // Abort on Negative Load Constant
 // -------------------------------
 // 0.9.9: standardize loader constant names
-if ( defined( 'ADMINSANITY_LOAD_NOTICES' ) && !ADMINSANITY_LOAD_NOTICES ) {return;}
+if ( defined( 'ADMINSANITY_LOAD_NOTICES' ) && !ADMINSANITY_LOAD_NOTICES ) {
+	return;
+}
 
 // --- allow for use as an mu plugin ---
 // 0.9.9: attempt to prevent double load conflicts
+// 1.0.1: use return instead of function wrapper
 if ( !function_exists( 'adminsanity_notices_message_levels' ) ) {
+
 
 // ------------------
 // Get Message Levels
@@ -472,5 +476,6 @@ function adminsanity_notice_test() {
 	echo '</div>';
 }
 
-// --- close function load wrapper ---
+// --- end function load wrapper ---
 }
+

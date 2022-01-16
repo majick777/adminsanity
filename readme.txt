@@ -3,8 +3,8 @@ Contributors: majick
 Donate link: https://wpmedic.tech
 Tags: wordpress admin, admin menu, admin notices, admin bar, cleaner
 Requires at least: 4.0.0
-Tested up to: 5.6.2
-Stable tag: 1.0.0
+Tested up to: 5.8
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,8 +69,9 @@ Once you have activated the plugin you will see these changes in your WordPress 
 **Admin Menu** 
 - a sorted menu with three sections: Content, Settings and Extensions
 - an "Expand menu" item at the top to view a full page expanded Admin Menu
+- an additional Plugin Settings menu item for non-default settings pages
 **Admin Notices** 
-- notices are grouped into clickable tabs according to notice types
+- notices are grouped into clickable dropdown tabs according to notice types
 - clicking on Notices reveals an extra menu sorted by notice level
 **Admin Bar** 
 - a "Shuffle" cycler icon to cycle between all, default and extra bar items
@@ -80,11 +81,16 @@ See the full plugin description for more details on what each of these modificat
 
 = Where are the Plugin Settings? =
 
-A settings page will be added in a future version. However, some configuration is currently available via constants and filters (see below.)
+A settings page is available via the Plugin Settings submenu (or the Settings submenu when the Menu module is inactive.)
+Configuration is also currently available via constants and filters (see below.)
+
+= Can I use this as a must-use plugin? =
+
+Yes. Simply copy the individual module file(s) you wish to use into your `/wp-content/mu-plugins/` directory. Alternatively you can also copy the entire plugin into that directory if you wish.
 
 = How do I turn a specific module off? =
 
-Currently modules can be disabled by defining any of the following constants as `false`:
+Modules can be disabled via te settings page or by defining any of the following constants as `false`:
 
 `ADMINSANITY_LOAD_MENU`, `ADMINSANITY_LOAD_BAR`, `ADMINSANITY_LOAD_NOTICES`
 
@@ -98,18 +104,15 @@ eg. `add_filter( 'adminsanity_load_bar', '__return_false' );
 
 = Can I turn off some of the additional features? =
 
-Yes. The following additional features can be disabled using constants or filters:
+Yes, on the plugin settings page. These features can be also disabled using constants or filters in the same way as above:
 
 | Feature              | Constant                  | Filter |
 | Meta Menu Headings   | ADMINSANITY_MENU_METAS    | adminsanity_menu_metas    |
 | Plugin Settings Menu | ADMINSANITY_MENU_PLUGINS  | adminsanity_menu_plugins  |
 | Expand Menu Icon     | ADMINSANITY_MENU_EXPANDER | adminsanity_menu_expander |
+| Bar Frontend Loading | ADMINSANITY_BAR_FRONTEND  | adminsanity_bar_frontend  |
 | Bar Item Switcher    | ADMINSANITY_BAR_CYCLER    | adminsanity_bar_cycler    |
 | Bar Dropdown Toggle  | ADMINSANITY_BAR_DROPDOWN  | adminsanity_bar_dropdown  |
-
-= Can I use this as a must-use plugin? =
-
-Yes. Simply copy the individual module file(s) you wish to use into your `/wp-content/mu-plugins/` directory. Alternatively you can also copy the entire plugin into that directory if you wish.
 
 = Can I keep the position of some items in the Admin Menu? =
 
@@ -119,6 +122,12 @@ Yes. Although tricky, a filter for this was included in the initial proof of con
 == Screenshots ==
 
 == Changelog ==
+
+= 1.0.1 =
+* Added: Plugin Panel library v1.2.2
+* Added: plugin settings for Plugin Panel
+* Added: plugin images for admin page
+* Fixed: Conflict with Bar and Woocommerce Product Attributes page
 
 = 1.0.0 =
 * Fixed: explicitly sanitize and/or validate GET/REQUEST values

@@ -58,11 +58,11 @@
 // ? save user meta menu (and submenu?) expanded / collapsed states ?
 
 
-// -------------------------------
-// Abort on Negative Load Constant
-// -------------------------------
+// --- abort on negative load constant ---
 // 0.9.9: standardize loader constant names
-if ( defined( 'ADMINSANITY_LOAD_MENU' ) && !ADMINSANITY_LOAD_MENU ) {return;}
+if ( defined( 'ADMINSANITY_LOAD_MENU' ) && !ADMINSANITY_LOAD_MENU ) {
+	return;
+}
 
 // --- allow for use as an mu-plugin ---
 // 0.9.9: attempt to prevent double load conflicts
@@ -1321,5 +1321,5 @@ function adminsanity_menu_keep_position_test( $keep ) {
 	return array_merge( $keep, array( 'prototasq' ) );
 }
 
-// --- close function load wrapper ---
+// --- end load wrapper ---
 }
