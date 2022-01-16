@@ -75,7 +75,7 @@ add_action( '_network_admin_menu', 'adminsanity_menu_store_default', 0 );
 add_action( '_user_admin_menu', 'adminsanity_menu_store_default', 0 );
 add_action( '_admin_menu', 'adminsanity_menu_store_default', 0 );
 function adminsanity_menu_store_default() {
-	global $menu, $submenu, $adminsanity; 
+	global $menu, $submenu, $adminsanity;
 	$adminsanity['default_menu'] = $menu;
 	$adminsanity['default_submenu'] = $submenu;
 }
@@ -103,7 +103,7 @@ function adminsanity_menu_split_order( $menu_order ) {
 	// Setting Submenu Split
 	// ---------------------
 	// 0.9.7: added for settings menu splitting (default and extras)
-	
+
 	// --- check whether to add extra settings menu ---
 	$plugin_settings = true;
 	if ( defined( 'ADMINSANITY_MENU_PLUGINS' ) ) {
@@ -113,11 +113,11 @@ function adminsanity_menu_split_order( $menu_order ) {
 	} else {
 		$plugin_settings = (bool)apply_filters( 'adminsanity_menu_plugins', $plugin_settings );
 	}
-	
+
 	if ( $plugin_settings ) {
-	
+
 		$extra_settings = array();
-	
+
 		// --- get default Settings submenus ---
 		if ( isset( $submenu['options-general.php'] ) ) {
 
@@ -128,17 +128,18 @@ function adminsanity_menu_split_order( $menu_order ) {
 				$settings_links[] = $settings_item[2];
 			}
 
-			// --- loop to distinguish added settings items ---		
+			// --- loop to distinguish added settings items ---
 			foreach ( $submenu['options-general.php'] as $i => $settings_item ) {
 				// 0.9.8: fix for some submenu page URLs
 				if ( !in_array( $settings_item[2], $settings_links ) ) {
+					// 0.9.9: fix to not move direct options.php link
 					if ( 'options.php' != $settings_item[2] )  {
 						if ( !strstr( $settings_item[2], 'page=' ) ) {
 							$settings_item[2] = 'options-general.php?page=' . $settings_item[2];
 						}
+						$extra_settings[] = $settings_item;
+						unset( $submenu['options-general.php'][$i] );
 					}
-					$extra_settings[] = $settings_item;
-					unset( $submenu['options-general.php'][$i] );
 				}
 			}
 		}
@@ -154,7 +155,9 @@ function adminsanity_menu_split_order( $menu_order ) {
 			foreach ( $menu as $i => $item ) {
 				if ( !$found ) {
 					$menua[$i] = $item;
-					if ( $item[2] == 'options-general.php' ) {$found = true;}
+					if ( $item[2] == 'options-general.php' ) {
+						$found = true;
+					}
 				} else {
 					$menub[$i] = $item;
 				}
@@ -162,10 +165,10 @@ function adminsanity_menu_split_order( $menu_order ) {
 
 			// --- increment second-half menu indexes ---
 			foreach ( $menub as $i => $item ) {
-				$menuc[$i+1] = $item;	
+				$menuc[$i+1] = $item;
 			}
 
-			// --- add extra settings menu ---      
+			// --- add extra settings menu ---
 			$settings_item = array(
 				__( 'Plugin Settings', 'adminsanity' ),	// menu name
 				'manage_options',						// capability
@@ -181,12 +184,12 @@ function adminsanity_menu_split_order( $menu_order ) {
 			$menua[$position] = $settings_item;
 			$menu = array_merge( $menua, $menuc );
 		}
-		
+
 	}
 
 	// Main Menu Reorder
 	// -----------------
-	
+
 	// --- set empty split menu arrays ---
 	$menua = $menua2 = $menub = $menuc = array();
 
@@ -194,7 +197,9 @@ function adminsanity_menu_split_order( $menu_order ) {
 	foreach ( $menu as $i => $item ) {
 		$found = false;
 		foreach ( $adminsanity['default_menu'] as $j => $menu_item ) {
-			if ( $item[2] == $menu_item[2] ) {$found = true;}
+			if ( $item[2] == $menu_item[2] ) {
+				$found = true;
+			}
 		}
 
 		// 0.9.6: remove some separators from menu order temporarily
@@ -219,7 +224,9 @@ function adminsanity_menu_split_order( $menu_order ) {
 	}
 	// 0.9.6: move separator1 to split menu A
 	$menua[] = 'separator1';
-	foreach ( $menua2 as $item ) {$menua[] = $item;}
+	foreach ( $menua2 as $item ) {
+		$menua[] = $item;
+	}
 	unset( $menua2 );
 
 	// --- filter menu items whose position to keep ---
@@ -243,12 +250,15 @@ function adminsanity_menu_split_order( $menu_order ) {
 		if ( !in_array( 'options.php', $keep ) ) {
 			$menub2 = array(); $found = false;
 			foreach ( $menub as $i => $itemname ) {
-				if ( $found ) {$i++;}
+				if ( $found ) {
+					$i++;
+				}
 				if ( $itemname != 'options.php' ) {
 					$menub2[$i] = $itemname;
 				}
 				if ( $itemname == 'options-general.php' ) {
-					$i++; $found = true;
+					$i++;
+					$found = true;
 					$menub2[$i] = 'options.php';
 				}
 			}
@@ -261,29 +271,52 @@ function adminsanity_menu_split_order( $menu_order ) {
 		$sep = 0;
 		$menua_keep = $menub_keep = $menuc_keep = array();
 		foreach ( $menu as $i => $item ) {
-			if ( $item[2] == 'separator2' ) {$sep = 1;}
-			elseif ( $item[2] == 'separator-last' ) {$sep = 2;}
+			if ( $item[2] == 'separator2' ) {
+				$sep = 1;
+			} elseif ( $item[2] == 'separator-last' ) {
+				$sep = 2;
+			}
 			if ( in_array( $item[2], $keep ) ) {
 				if ( $sep == 0 ) {
 					$menua_keep[$i] = $item[2];
-					if ( in_array( $item[2], $menub ) ) {$key = array_search( $item[2], $menub ); unset($menub[$key]);}
-					if ( in_array( $item[2], $menuc ) ) {$key = array_search( $item[2], $menuc ); unset($menuc[$key]);}
+					if ( in_array( $item[2], $menub ) ) {
+						$key = array_search( $item[2], $menub );
+						unset( $menub[$key] );
+					} elseif ( in_array( $item[2], $menuc ) ) {
+						$key = array_search( $item[2], $menuc );
+						unset( $menuc[$key] );
+					}
 				} elseif ( $sep == 1 ) {
 					$menub_keep[$i] = $item[2];
-					if ( in_array( $item[2], $menua ) ) {$key = array_search( $item[2], $menua ); unset($menua[$key]);}
-					if ( in_array( $item[2], $menuc ) ) {$key = array_search( $item[2], $menuc ); unset($menuc[$key]);}
+					if ( in_array( $item[2], $menua ) ) {
+						$key = array_search( $item[2], $menua );
+						unset( $menua[$key] );
+					} elseif ( in_array( $item[2], $menuc ) ) {
+						$key = array_search( $item[2], $menuc );
+						unset( $menuc[$key] );
+					}
 				} elseif ( $sep == 2 ) {
 					$menuc_keep[$i] = $item[2];
-					if ( in_array( $item[2], $menua ) ) {$key = array_search( $item[2], $menua ); unset($menua[$key]);}
-					if ( in_array( $item[2], $menub ) ) {$key = array_search( $item[2], $menub ); unset($menub[$key]);}
+					if ( in_array( $item[2], $menua ) ) {
+						$key = array_search( $item[2], $menua );
+						unset( $menua[$key] );
+					} elseif ( in_array( $item[2], $menub ) ) {
+						$key = array_search( $item[2], $menub );
+						unset( $menub[$key] );
+					}
 				}
 			}
 		}
 	}
-	
+
 	// --- debug point ---
-	if ( isset( $_GET['menu-debug'] ) && ( '1' == $_GET['menu-debug'] ) ) {
-		print_r( $menua_keep ); print_r( $menub_keep ); print_r( $menuc_keep );
+	// 1.0.0: explicitly validatate GET value
+	if ( isset( $_GET['as-debug'] ) && in_array( $_GET['as-menu-debug'], array( 'all', 'menu' ) ) ) {
+		echo '<span style="display:none;">';
+		echo 'Menu A: ' . print_r( $menua_keep, true ) . PHP_EOL;
+		echo 'Menu B: ' . print_r( $menub_keep, true ) . PHP_EOL;
+		echo 'Menu C: ' . print_r( $menuc_keep, true ) . PHP_EOL;
+		echo '</span>';
 	}
 
 	// --- merge the kept menu items with split menus ---
@@ -300,11 +333,19 @@ function adminsanity_menu_split_order( $menu_order ) {
 
 	// --- resort split menus and merge to final menu order ---
 	// 0.9.9: use single keyed array for menu items
-	ksort( $menua ); ksort( $menub ); ksort( $menuc );
+	ksort( $menua );
+	ksort( $menub );
+	ksort( $menuc );
 	$menu_items = array();
-	foreach ( $menua as $item ) {$menu_items['a'][] = $item;}
-	foreach ( $menub as $item ) {$menu_items['b'][] = $item;}
-	foreach ( $menuc as $item ) {$menu_items['c'][] = $item;}
+	foreach ( $menua as $item ) {
+		$menu_items['a'][] = $item;
+	}
+	foreach ( $menub as $item ) {
+		$menu_items['b'][] = $item;
+	}
+	foreach ( $menuc as $item ) {
+		$menu_items['c'][] = $item;
+	}
 
 	// --- debug point ---
 	// print_r( $menu_items );
@@ -332,7 +373,7 @@ function adminsanity_menu_split_order( $menu_order ) {
 			}
 		}
 	}
-	
+
 	// --- filter order and merge ---
 	// A = Dashboard and Post Type Menus
 	// B = All Other Default WordPress Menus
@@ -362,12 +403,13 @@ function adminsanity_menu_split_order( $menu_order ) {
 			$menu_order = $new_menu_order;
 		}
 
-		// --- debug point ---		
-		if ( isset( $_GET['menu-debug'] ) && ( '1' == $_GET['menu-debug'] ) ) {
+		// --- debug point ---
+		// 1.0.0: explicitly validate GET value
+		if ( isset( $_GET['as-debug'] ) && in_array( $_GET['as-debug'], array( 'all', 'menu' ) ) ) {
 			echo '<span id="menu-order" style="display:none;">' . print_r( $menu_order, true ) . '</span>';
 		}
 	}
-	
+
 	return $menu_order;
 }
 
@@ -376,15 +418,15 @@ function adminsanity_menu_split_order( $menu_order ) {
 // -----------------
 add_action( 'admin_print_styles', 'adminsanity_menu_styles');
 function adminsanity_menu_styles() {
-	
+
 	// --- set admin menu styles ---
-	
+
 	// - remove top margin -
 	$css = '#adminmenuwrap #adminmenu {margin-top: 0;}';
-	
+
 	// - separator lines -
 	$css .= 'ul#adminmenu li.wp-menu-separator {border-bottom: 1px solid #F1F1F1; margin-bottom:0;}';
-	
+
 	// - mini triangles on separators -
 	// ::after ?
 	$css .= '#adminmenu div.separator:after {
@@ -405,14 +447,14 @@ function adminsanity_menu_styles() {
 	// 0.9.9: added get user colour scheme
 	$current_user = wp_get_current_user();
 	$scheme = $current_user->admin_color;
-		
+
 	// --- meta menu styles ---
 	if ( $meta_menus ) {
 
 		// - meta menu items -
-		$css .= '#adminmenu .meta-menu {
-			display:none; text-align: center; font-size: 1em; line-height: 2em;
-			 font-weight: bold; text-transform: uppercase; letter-spacing: 2px;}';
+		$css .= '#adminmenu .meta-menu {';
+		$css .= 'display:none; text-align: center; font-size: 1em; line-height: 2em;';
+		$css .= 'font-weight: bold; text-transform: uppercase; letter-spacing: 2px;}' . PHP_EOL;
 		// 0.9.9 copy other color scheme rules explicitly via javascript
 		if ( 'fresh' == $scheme ) {
 			$css .= '#adminmenu .meta-menu {color: #FFF;}';
@@ -422,32 +464,32 @@ function adminsanity_menu_styles() {
 		// 0.9.9 copy other color scheme rules explicitly via javascript
 		if ( 'fresh' == $scheme ) {
 			// #444444
-			$css .= '#adminmenu .meta-menu.current-meta {background-color: #0073aa;}';
+			$css .= '#adminmenu .meta-menu.current-meta {background-color: #0073aa;}' . PHP_EOL;
 		}
 
 		// - background fix for separators with meta menus -
 		if ( 'fresh' == $scheme ) {
-			$css .= '#adminmenu .separator2.bgfix, #adminmenu .separator-last.bgfix {background-color: #0073aa;}';
+			$css .= '#adminmenu .separator2.bgfix, #adminmenu .separator-last.bgfix {background-color: #0073aa;}' . PHP_EOL;
 		}
 
 		// - current meta menu separators -
-		$css .= '#adminmenu .wp-menu-separator.current-meta {margin-bottom: 0;}';
+		$css .= '#adminmenu .wp-menu-separator.current-meta {margin-bottom: 0;}' . PHP_EOL;
 
 		// - fix for collapsed menu -
-		$css .= '.folded #adminmenu .meta-menu {overflow: hidden; font-size: 1.2em; text-indent: 13px; letter-spacing: 30px;}';
-		$css .= '.wp-responsive-open #adminmenu .meta-menu {text-indent: 0; font-size: 1.3em; letter-spacing: 3px;}';
+		$css .= '.folded #adminmenu .meta-menu {overflow: hidden; font-size: 1.2em; text-indent: 13px; letter-spacing: 30px;}' . PHP_EOL;
+		$css .= '.wp-responsive-open #adminmenu .meta-menu {text-indent: 0; font-size: 1.3em; letter-spacing: 3px;}' . PHP_EOL;
 
 		// - spacing fix for M in Manage -
-		$css .= '.folded #adminmenu #manage-meta-menu {text-indent: 10px;}';
+		$css .= '.folded #adminmenu #manage-meta-menu {text-indent: 10px;}' . PHP_EOL;
 
 		// - fix for auto-collapsed manu -
 		$css .= '@media only screen and (max-width: 960px) {
-			#adminmenu .meta-menu {text-indent: 13px; letter-spacing: 30px;}
+			#adminmenu .meta-menu {overflow: hidden; font-size: 1.2em; text-indent: 13px; letter-spacing: 30px;}
 			#adminmenu #manage-meta-menu {text-indent: 10px;}
-		}';
+		}' . PHP_EOL;
 	}
 
-	// --- get expander setting ---	
+	// --- get expander setting ---
 	$expander = true;
 	if ( defined( 'ADMINSANITY_MENU_EXPANDER' ) ) {
 		$expander = (bool)ADMINSANITY_MENU_EXPANDER;
@@ -456,110 +498,116 @@ function adminsanity_menu_styles() {
 	} else {
 		$expander = (bool)apply_filters( 'adminsanity_menu_expander', $expander );
 	}
-	
+
 	// --- full page menu styles ---
 	// 0.9.9: added for expanded full page menu
 	if ( $expander ) {
-	
+
 		// - expand menu button -
 		// 0.9.9 copy other color scheme rules explicitly via javascript
 		if ( 'fresh' == $scheme ) {
-			$css .= '#adminsanity-menu-toggle #expand-button {color: #aaa ;}';
-			$css .= '#adminsanity-menu-toggle:hover span {color: #00b9eb;}';
+			$css .= '#adminsanity-menu-toggle #expand-button {color: #aaa ;}' . PHP_EOL;
+			$css .= '#adminsanity-menu-toggle:hover span {color: #00b9eb;}' . PHP_EOL;
 		}
 
-		$css .= '#adminsanity-menu-toggle .expand-button-icon {width: 36px; height: 34px;}';
-		$css .= '#adminsanity-menu-toggle #expand-button {display: block; width: 100%;
-		height: 34px; margin: 0; border: none; padding: 0; position: relative; overflow: visible;
-		line-height: 34px; background: 0 0; cursor: pointer; outline: 0;}';
-		$css .= '#adminsanity-menu-toggle .expand-button-icon:after {
-    		content: "\f148"; display: block; position: relative; top: 7px; 
-    		text-align: center; font: 400 20px/1 dashicons !important; speak: none; 
-    		-webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-    		-webkit-transform: rotate(180deg); transform: rotate(180deg);}';
-		$css .= '#adminsanity-menu-toggle .expand-button-icon, #adminsanity-menu-toggle .expand-button-label {
-    		display: block; position: absolute; top: 0; left: 0; line-height: 34px;}';
-    	$css .= '#adminsanity-menu-toggle .expand-button-label {padding: 0 0 0 36px;}';
-    	$css .= '.folded #adminmenu #adminsanity-menu-toggle .expand-button-label {display: none;}';
-    	$css .= '@media only screen and (max-width: 960px) {
-		 	.auto-fold #adminmenu #adminsanity-menu-toggle .expand-button-label {display: none;}
-		}';
-    	$css .= '.wp-responsive-open #adminmenu #adminsanity-menu-toggle .expand-button-label {display: block;}';
-		$css .= '#adminsanity-menu-toggle .expand-button-icon:after, #adminsanity-menu-toggle .expand-button-label {
-			transition: all .1s ease-in-out;}';
-		$css .= '#expand-button.expanded .expand-button-icon:after, .rtl #expand-button .expand-button-icon:after {
-		 	-webkit-transform: rotate(0deg); transform: rotate(0deg);}';
-		$css .= '.folded.rtl #expand-button.expanded .expand-button-icon:after {
-			transform: rotate(180deg); -webkit-transform: rotate(180deg);}';
-		
+		$css .= '#adminsanity-menu-toggle .expand-button-icon {width: 36px; height: 34px;}' . PHP_EOL;
+		$css .= '#adminsanity-menu-toggle #expand-button {display: block; width: 100%;';
+			$css .= ' height: 34px; margin: 0; border: none; padding: 0; position: relative; overflow: visible;';
+			$css .= ' line-height: 34px; background: 0 0; cursor: pointer; outline: 0;}' . PHP_EOL;
+		$css .= '#adminsanity-menu-toggle .expand-button-icon:after {';
+    			$css .= ' content: "\f148"; display: block; position: relative; top: 7px;';
+    			$css .= ' text-align: center; font: 400 20px/1 dashicons !important; speak: none;';
+    			$css .= '-webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;';
+    			$css .= '-webkit-transform: rotate(180deg); transform: rotate(180deg);}' . PHP_EOL;
+		$css .= '#adminsanity-menu-toggle .expand-button-icon, #adminsanity-menu-toggle .expand-button-label {';
+    			$css .= 'display: block; position: absolute; top: 0; left: 0; line-height: 34px;}' . PHP_EOL;
+	    	$css .= '#adminsanity-menu-toggle .expand-button-label {padding: 0 0 0 36px;}' . PHP_EOL;
+	    	$css .= '.folded #adminmenu #adminsanity-menu-toggle .expand-button-label {display: none;}' . PHP_EOL;
+	    	$css .= '@media only screen and (max-width: 960px) { ';
+			$css .= '.auto-fold #adminmenu #adminsanity-menu-toggle .expand-button-label {display: none;}';
+		$css .= '}' . PHP_EOL;
+	    	$css .= '.wp-responsive-open #adminmenu #adminsanity-menu-toggle .expand-button-label {display: block;}' . PHP_EOL;
+		$css .= '#adminsanity-menu-toggle .expand-button-icon:after, #adminsanity-menu-toggle .expand-button-label {';
+			$css .= 'transition: all .1s ease-in-out;}' . PHP_EOL;
+		$css .= '#expand-button.expanded .expand-button-icon:after, .rtl #expand-button .expand-button-icon:after {';
+		 	$css .= '-webkit-transform: rotate(0deg); transform: rotate(0deg);}' . PHP_EOL;
+		$css .= '.folded.rtl #expand-button.expanded .expand-button-icon:after {';
+			$css .= 'transform: rotate(180deg); -webkit-transform: rotate(180deg);}' . PHP_EOL;
+
 		// - admin menu expander bar icon ---
-		$css .= '@media screen and (min-width: 781px) {
-			#wpadminbar #wp-toolbar #wp-admin-bar-expand-toggle {display: none;} }
-		#wp-admin-bar-expand-toggle .ab-icon:before {
-			transform: rotate(90deg); -webkit-transform: rotate(90deg); top: 1px;
-    		content: "\f228"; display: inline-block; float: left; font: 400 40px/45px dashicons;
-		    vertical-align: middle; outline: 0; margin: 0; -webkit-font-smoothing: antialiased;
-    		-moz-osx-font-smoothing: grayscale; height: 44px; width: 50px; padding: 0; border: none;
-    		text-align: center; text-decoration: none; box-sizing: border-box;}';
+		$css .= '@media screen and (min-width: 781px) {' . PHP_EOL;
+			$css .= '#wpadminbar #wp-toolbar #wp-admin-bar-expand-toggle {display: none;} }';
+			$css .= '#wp-admin-bar-expand-toggle .ab-icon:before {';
+				$css .= ' transform: rotate(90deg); -webkit-transform: rotate(90deg); top: 1px;';
+    				$css .= ' content: "\f228"; display: inline-block; float: left; font: 400 40px/45px dashicons;';
+			   	$css .= ' vertical-align: middle; outline: 0; margin: 0; -webkit-font-smoothing: antialiased;';
+    				$css .= ' -moz-osx-font-smoothing: grayscale; height: 44px; width: 50px; padding: 0; border: none;';
+    				$css .= 'text-align: center; text-decoration: none; box-sizing: border-box;}' . PHP_EOL;
+    		// 1.0.0: added missing media query close bracket
+    		$css .= '}' . PHP_EOL;
 
 		// - page menu div -
 		// (copied from wpbody-content)
 		// TODO: check float rule for RTL languages ?
-		$css .= '#adminsanity-menu-page {padding-bottom: 65px; float: left; width: 100%; overflow: visible !important;}';
+		$css .= '#adminsanity-menu-page {padding-bottom: 65px; float: left; width: 100%; overflow: visible !important;}' . PHP_EOL;
 
 		// - page menu lists -
-		$css .= '.adminsanity-menu-wrapper {display:inline-block; vertical-align: top; margin-right: 20px; margin-top: 20px; width: 350px;}';
-		$css .= '.adminsanity-menu-wrapper.last {margin-right: 0px;}';
+		$css .= '.adminsanity-menu-wrapper {display:inline-block; vertical-align: top; margin-right: 20px; margin-top: 20px; width: 350px;}' . PHP_EOL;
+		$css .= '.adminsanity-menu-wrapper.last {margin-right: 0px;}' . PHP_EOL;
 
 		// - menu headings -
 		// 0.9.9 copy other color scheme rules explicitly via javascript
 		if ( 'fresh' == $scheme ) {
 			// #444444
-			$css .= '.adminsanity-menu-heading {color: #FFF;} ';
-			$css .= '.adminsanity-menu-wrapper.current-meta .adminsanity-menu-heading {background-color: #0073aa !important;}';
+			$css .= '.adminsanity-menu-heading {color: #FFF;}' . PHP_EOL;
+			$css .= '.adminsanity-menu-wrapper.current-meta .adminsanity-menu-heading {background-color: #0073aa !important;}' . PHP_EOL;
 		}
-		$css .= '.adminsanity-menu-heading {text-align: center; font-size: 1em; line-height: 2em; width: 160px; padding: 7px 0;
-			font-weight: bold; text-transform: uppercase; letter-spacing: 2px; display: inline-block; vertical-align:top;}';
-		$css .= '.adminsanity-menu .wp-menu-name {position: relative !important; left: 0px !important;}';
+		$css .= '.adminsanity-menu-heading {';
+			$css .= 'text-align: center; font-size: 1em; line-height: 2em; width: 160px; padding: 7px 0; ';
+			$css .= 'font-weight: bold; text-transform: uppercase; letter-spacing: 2px; display: inline-block; vertical-align:top;}' . PHP_EOL;
+		$css .= '.adminsanity-menu .wp-menu-name {position: relative !important; left: 0px !important;}' . PHP_EOL;
 
 		// - menu dropdown arrows =
-		$css .= '.adminsanity-menu-dropdown {display: inline-block; vertical-align: top;
-			 font-size: 3em; line-height: 34px; width: 34px; height: 34px;}';
+		$css .= '.adminsanity-menu-dropdown {';
+			$css .= 'display: inline-block; vertical-align: top;';
+			$css .= 'font-size: 3em; line-height: 34px; width: 34px; height: 34px;}' . PHP_EOL;
 
 		// - submenu dropdown -
 		// TODO: check possible need for further z-index rules ?
-		$css .= '.adminsanity-menu .wp-menu-open .wp-submenu {position: relative !important; float: left !important;
-			top: 0px !important; right: 0px !important; bottom: 0px !important; left: 0px !important;}
-		.adminsanity-menu li.wp-has-submenu.wp-not-current-submenu {height: auto !important;}
-		.adminsanity-menu li.wp-has-submenu.wp-not-current-submenu ul.wp-submenu {display: none !important; height: 0 !important;}
-		.adminsanity-menu li.menu-top {clear: both !important; width: 160px !important;}
-		.adminsanity-menu li.wp-has-current-submenu {height: 35px !important;}';
+		$css .= '.adminsanity-menu .wp-menu-open .wp-submenu {';
+			$css .= 'position: relative !important; float: left !important;';
+			$css .= 'top: 0px !important; right: 0px !important; bottom: 0px !important; left: 0px !important;}'  . PHP_EOL;
+		$css .= '.adminsanity-menu li.wp-has-submenu.wp-not-current-submenu {height: auto !important;}' . PHP_EOL;
+		$css .= '.adminsanity-menu li.wp-has-submenu.wp-not-current-submenu ul.wp-submenu {display: none !important; height: 0 !important;}'  . PHP_EOL;
+		$css .= '.adminsanity-menu li.menu-top {clear: both !important; width: 160px !important;}' . PHP_EOL;
+		$css .= '.adminsanity-menu li.wp-has-current-submenu {height: 35px !important;}' . PHP_EOL;
 
 		// - submenu dropdown arrows -
-		$css .= '.submenu-dropdown-arrow, .submenu-dropdown-arrow-alt {float:right; text-align:right;
-			margin-right: -20px; font-size: 2.5em; line-height: 34px; width: 34px; height: 34px;}';
-		$css .= '.submenu-dropdown-arrow-alt {display: none;}';
+		$css .= '.submenu-dropdown-arrow, .submenu-dropdown-arrow-alt {float:right; text-align:right;';
+			$css .= 'margin-right: -20px; font-size: 2.5em; line-height: 34px; width: 34px; height: 34px;}' . PHP_EOL;
+		$css .= '.submenu-dropdown-arrow-alt {display: none;}' . PHP_EOL;
 
 		// - float expanded submenus -
-		$css .= '.adminsanity-menu li.wp-menu-open ul.wp-submenu {border-top: 1px solid #FFF !important;
-			margin-left: 185px !important; margin-top: -35px !important;}';
+		$css .= '.adminsanity-menu li.wp-menu-open ul.wp-submenu {';
+			$css .= 'border-top: 1px solid #FFF !important;';
+			$css .= 'margin-left: 185px !important; margin-top: -35px !important;}';
 
 		// - unfloat for medium screens -
-		$css .= '@media only screen and (max-width: 1149px) {
-			.adminsanity-menu-wrapper {width: 200px; margin-right: 10px;}
-			.adminsanity-menu li.wp-menu-open ul.wp-submenu {margin-left: 0px !important; margin-top: 0px !important; border-top: none !important;}
-			.adminsanity-menu li.wp-has-current-submenu {height: auto !important;}
-			.submenu-dropdown-arrow {display: none;}
-			.submenu-dropdown-arrow-alt {display: block;}
-		}';
+		$css .= '@media only screen and (max-width: 1149px) {' . PHP_EOL;
+			$css .= '.adminsanity-menu-wrapper {width: 200px; margin-right: 10px;}' . PHP_EOL;
+			$css .= '.adminsanity-menu li.wp-menu-open ul.wp-submenu {margin-left: 0px !important; margin-top: 0px !important; border-top: none !important;}' . PHP_EOL;
+			$css .= '.adminsanity-menu li.wp-has-current-submenu {height: auto !important;}'  . PHP_EOL;
+			$css .= '.submenu-dropdown-arrow {display: none;}' . PHP_EOL;
+			$css .= '.submenu-dropdown-arrow-alt {display: block;}' . PHP_EOL;
+		$css .= '}';
 
 		// - fixes for smaller screens -
-		$css .= '@media only screen and (max-width: 599px) {
-			.adminsanity-menu-wrapper {margin-right: 0px;}
-		}';
+		$css .= '@media only screen and (max-width: 599px) {';
+			$css .= ' .adminsanity-menu-wrapper {margin-right: 0px;} ';
+		$css .= '}' . PHP_EOL;
 
 	}
-    
+
 	// --- filter and output ---
 	$css = apply_filters( 'adminsanity_menu_styles', $css );
 	echo '<style>' . $css . '</style>';
@@ -570,7 +618,7 @@ function adminsanity_menu_styles() {
 // ------------------
 // 0.9.6: add meta menu creation script
 // 0.9.9: add full page expanded menu creation script
-add_action( 'admin_footer', 'adminsanity_menu_scripts' );
+add_action( 'admin_footer', 'adminsanity_menu_scripts', 99 );
 function adminsanity_menu_scripts() {
 
 	global $adminsanity;
@@ -606,8 +654,8 @@ function adminsanity_menu_scripts() {
 		// --- set menu labels ---
 		// 0.9.9: added menu label filtering
 		$labels = array(
-			'content'		=> __( 'Content', 'adminsanity' ),
-			'manage'		=> __( 'Manage', 'adminsanity' ),
+			'content'	=> __( 'Content', 'adminsanity' ),
+			'manage'	=> __( 'Manage', 'adminsanity' ),
 			'extensions'	=> __( 'Extensions', 'adminsanity' ),
 		);
 		// (note: you can change labels but do not change keys)
@@ -633,47 +681,43 @@ function adminsanity_menu_scripts() {
 		}
 		$labels = $ordered_labels;
 	}
-	
+
 	// --- set empty style rules strings ---
 	$js = "as_rules = colorrules = hoverrules = ''; ";
 
-
-	// 0.9.9: set global debug mode
-	if ( !isset( $adminsanity['debug_set'] ) ) {	
-		$valid = false;
-		if ( isset( $_GET['as-debug'] ) ) {
-			$debug = $_GET['as-debug'];
-			if ( in_array( $debug, array( 'all', 'menu', 'bar', 'notices' ) ) ) {
-				$js .= "as_debug = '" . $debug . "'; ";
-				$valid = true;
-			}			
-		} 
-		if ( !$valid ) {
-			$js .= "as_debug = false; ";
+	// 0.9.9: set menu debug mode
+	$valid = false;
+	if ( isset( $_GET['as-debug'] ) ) {
+		// 1.0.0: use sanitize_title on GET value
+		$debug = sanitize_title( $_GET['as-debug'] );
+		if ( in_array( $debug, array( 'all', 'menu' ) ) ) {
+			$js .= "as_menu_debug = true; ";
+			$valid = true;
 		}
-		
 	}
-	$adminsanity['debug_set'] = true;
+	if ( !$valid ) {
+		$js .= "as_menu_debug = false; ";
+	}
 
 	// --- add get CSS function helper ---
 	// (used to copy hover style rules)
 	// ref: https://stackoverflow.com/a/23041055/5240159
+	// 0.9.9: use try/catch block to prevent uncaught CORS errors
 	$js .= "function adminsanity_get_style(rule, prop, scheme) {
 		hostname = '" . esc_js( $_SERVER['HTTP_HOST'] ) . "';
 		style = ''; sheets = document.styleSheets;
 		for (var i = 0; i < sheets.length; i++) {
 			if ( (sheets[i].href == null) || (sheets[i].href.indexOf(hostname) > -1) ) {
-				if (sheets[i].cssRules) {rules = sheets[i].cssRules;} else {rules = sheets[i].rules;}
-				for (var j = 0; j < rules.length; j++) {
-					if (rules[j].selectorText && rules[j].style[prop]) {
-						exact = false;
-						if (rule.indexOf('##') > -1) {rule = rule.replace('##','#'); exact = true;}
-					  	if ( (exact && (rules[j].selectorText == rule)) 
-					  	  || (!exact && (rules[j].selectorText.indexOf(rule) > -1)) ) {
-						    if ( (style == '') || (scheme && sheets[i].href.indexOf('css/colors') > -1) ) {
-								style = rules[j].style[prop];
-								if ( (as_debug == 'all') || (as_debug == 'menu') ) {
-									console.log(sheets[i].href+' : '+rule+' : '+rules[j].selectorText+' : '+style);
+				try {rules = sheets[i].cssRules || sheets[i].rules;} catch(e) {rules = false;}
+				if (rules) {
+					for (var j = 0; j < rules.length; j++) {
+						if (rules[j].selectorText && rules[j].style[prop]) {
+							exact = false;
+							if (rule.indexOf('##') > -1) {rule = rule.replace('##','#'); exact = true;}
+							if ( (exact && (rules[j].selectorText == rule)) || (!exact && (rules[j].selectorText.indexOf(rule) > -1)) ) {
+								if ( (style == '') || (scheme && sheets[i].href.indexOf('css/colors') > -1) ) {
+									style = rules[j].style[prop];
+									if (as_menu_debug) {console.log(sheets[i].href+' : '+rule+' : '+rules[j].selectorText+' : '+style);}
 								}
 							}
 						}
@@ -684,6 +728,15 @@ function adminsanity_menu_scripts() {
 		return style;
 	}" . PHP_EOL;
 
+	// --- add menu label arrays ---
+	$i = 0;
+	$js .= "var as_meta_keys = new Array(); var as_meta_labels = new Array();";
+	foreach ( $labels as $key => $label ) {
+		$js .= "as_meta_keys[" . $i . "] = '" . esc_js( $key ) . "'; ";
+		$js .= "as_meta_labels[" . $i . "] = '" . esc_js( $label ) . "'; ";
+		$i++;
+	}
+		
 	// --- add meta menus toggle script ---
 	if ( $meta_menus ) {
 
@@ -702,9 +755,9 @@ function adminsanity_menu_scripts() {
 					if (id == 'content') {jQuery('#adminmenu .separator2').removeClass('bgfix');}
 					else if (id == 'manage') {jQuery('#adminmenu .separator-last').removeClass('bgfix');}
 				}
-			}		
+			}
 		}" . PHP_EOL;
-		
+
 	}
 
 	// --- menu page toggle script ---
@@ -724,7 +777,7 @@ function adminsanity_menu_scripts() {
 		el = document.getElementById('adminmenu');
 		el.insertBefore(expand, el.childNodes[0] || null);" . PHP_EOL;
 
-			// --- create button to expand menu page ---		
+			// --- create button to expand menu page ---
 			// TODO: aria-label, aria-expanded ?
 			// <button type="button" id="expand-button" aria-label="Collapse Main menu" aria-expanded="true"
 			$js .= "button = document.createElement('button');
@@ -747,7 +800,7 @@ function adminsanity_menu_scripts() {
 
 		// --- add button ---
 		$js .= "document.getElementById('adminsanity-menu-toggle').appendChild(button);" . PHP_EOL;
-			   
+
 		// --- add expanded toggle function ---
 		$js .= "function adminsanity_menu_toggle() {
 			if (!as_menu_added) {adminsanity_menu_load();}
@@ -801,7 +854,7 @@ function adminsanity_menu_scripts() {
 		// $js .= "date = new Date(); date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000)); ";
 		// $js .= "document.cookie = 'adminsanity_first_load=' + value + '; expires=' + date.toUTCString() + '; path=/'; ";
 		$js .= "function adminsanity_toggle_submenu(id) {
-			if (jQuery('#'+id).hasClass('wp-menu-open')) {			
+			if (jQuery('#'+id).hasClass('wp-menu-open')) {
 				jQuery('#'+id).removeClass('wp-has-current-submenu wp-menu-open').addClass('wp-not-current-submenu');
 				jQuery('#'+id+' .submenu-dropdown-arrow').html('&#9662;');
 				jQuery('#'+id+' .submenu-dropdown-arrow-alt').html('&#9662;');
@@ -811,10 +864,10 @@ function adminsanity_menu_scripts() {
 				jQuery('#'+id+' .submenu-dropdown-arrow-alt').html('&#9652;');
 			}
 		}" . PHP_EOL;
-		
+
 		// --- add clone styles script ---
 		$js .= adminsanity_menu_clone_styles_script();
-	
+
 		// --- dynamic creation of menu ---
 		$js .= "function adminsanity_menu_load() {" . PHP_EOL;
 
@@ -832,38 +885,40 @@ function adminsanity_menu_scripts() {
 
 			// --- dynamic creation of menu wrappers ---
 			// TODO: optimize menu creation using jQuery
-			$i = 0;
-			foreach ( $labels as $key => $label ) {
-				$i++;
-				$js .= "div = document.createElement('div');
-				div.setAttribute('id', 'adminsanity-" . esc_js( $key ) . "-menu-wrapper');";				
-				if ( $i == count( $labels ) ) {
-					$js .= "div.setAttribute('class', 'adminsanity-menu-wrapper last');";
-				} else {
-					$js .= "div.setAttribute('class', 'adminsanity-menu-wrapper');";
-				}
-				$js .= "document.getElementById('adminsanity-menu-page').appendChild(div);" . PHP_EOL;
+			// 0.9.9: loop using key/label javascript array instead of PHP
+			// $i = 0;
+			// foreach ( $labels as $key => $label ) {
+			$js .= "for (i = 0; i < as_meta_keys.length; i++) {" . PHP_EOL;
+				// $i++;
+				$js .= "key = as_meta_keys[i]; label = as_meta_labels[i];" . PHP_EOL;
 
 				$js .= "div = document.createElement('div');
-				div.setAttribute('id', 'adminsanity-" . esc_js( $key ) . "-menu-heading');
+				div.setAttribute('id', 'adminsanity-'+key+'-menu-wrapper');
+				if (i == as_meta_keys.length) {div.setAttribute('class', 'adminsanity-menu-wrapper last');}
+				else {div.setAttribute('class', 'adminsanity-menu-wrapper');}
+				document.getElementById('adminsanity-menu-page').appendChild(div);" . PHP_EOL;
+
+				$js .= "div = document.createElement('div');
+				div.setAttribute('id', 'adminsanity-'+key+'-menu-heading');
 				div.setAttribute('class', 'adminsanity-menu-heading');
-				div.setAttribute('onclick', 'adminsanity_toggle_section(\"" . esc_js( $key ) . "\");');
-				div.innerHTML = '" . esc_js( $label ) . "';
-				document.getElementById('adminsanity-" . esc_js( $key ) . "-menu-wrapper').appendChild(div);" . PHP_EOL;
-				// $js .= "jQuery('#adminsanity-" . esc_js( $key ) . "-menu-heading').css('background-color', as_menu_background);"
+				div.setAttribute('onclick', 'adminsanity_toggle_section(\"'+key+'\");');
+				div.innerHTML = label;
+				document.getElementById('adminsanity-'+key+'-menu-wrapper').appendChild(div);" . PHP_EOL;
+				// $js .= "jQuery('#adminsanity-'+key+'-menu-heading').css('background-color', as_menu_background);"
 
 				$js .= "div = document.createElement('div');
-				div.setAttribute('id', 'adminsanity-" . esc_js( $key ) . "-menu-dropdown');
+				div.setAttribute('id', 'adminsanity-'+key+'-menu-dropdown');
 				div.setAttribute('class', 'adminsanity-menu-dropdown');
-				div.setAttribute('onclick', 'adminsanity_toggle_section(\"" . esc_js( $key ) . "\");');
+				div.setAttribute('onclick', 'adminsanity_toggle_section(\"'+key+'\");');
 				div.innerHTML = '&#9662;';
-				document.getElementById('adminsanity-" . esc_js( $key ) . "-menu-wrapper').appendChild(div);" . PHP_EOL;
+				document.getElementById('adminsanity-'+key+'-menu-wrapper').appendChild(div);" . PHP_EOL;
 
 				$js .= "ul = document.createElement('ul');
-				ul.setAttribute('id', 'adminsanity-" . esc_js( $key ) . "-menu');
+				ul.setAttribute('id', 'adminsanity-'+key+'-menu');
 				ul.setAttribute('class', 'adminsanity-menu');
-				document.getElementById('adminsanity-" . esc_js( $key ) . "-menu-wrapper').appendChild(ul);" . PHP_EOL;
-			}
+				document.getElementById('adminsanity-'+key+'-menu-wrapper').appendChild(ul);" . PHP_EOL;
+
+			$js .= "}" . PHP_EOL;
 
 			// --- clone admin menu ---
 			// (note: uses cloneWithCSS jQuery plugin)
@@ -886,13 +941,17 @@ function adminsanity_menu_scripts() {
 				// --- menu item background color fix ---
 				$js .= "jQuery(this).css('background-color', as_menu_background);" . PHP_EOL;
 
-				// --- move menu items to separate lists ---				
-				foreach ( $labels as $key => $label ) {
-					$js .= "if (jQuery(this).hasClass('" . esc_js( $key ). "-menu-item')) {jQuery(this).appendTo('#adminsanity-" . esc_js( $key ) . "-menu');}" . PHP_EOL;
-				}
-				
+				// --- move menu items to separate lists ---
+				// 0.9.9: loop using key/label javascript array instead of PHP
+				// foreach ( $labels as $key => $label ) {
+				$js .= "for (i = 0; i < as_meta_keys.length; i++) {";
+					$js .= "key = as_meta_keys[i];";
+					$js .= "if (jQuery(this).hasClass(key+'-menu-item')) {jQuery(this).appendTo('#adminsanity-'+key+'-menu');}";
+				$js .= "}" . PHP_EOL;
+				// }
+
 			$js .= "});
-			jQuery('#adminsanity-adminmenu').remove();" . PHP_EOL;		
+			jQuery('#adminsanity-adminmenu').remove();" . PHP_EOL;
 
 			// 0.9.9: remove colors (for hover color fix)
 			$js .= "jQuery('.adminsanity-menu-wrapper .wp-menu-name, .adminsanity-menu-wrapper .wp-menu-image')
@@ -925,7 +984,7 @@ function adminsanity_menu_scripts() {
 					else if (jQuery(this).hasClass('manage-menu-item')) {currentmeta = 'manage';}
 					else if (jQuery(this).hasClass('extensions-menu-item')) {currentmeta = 'extensions';}
 					if (currentmeta != '') {jQuery('#adminsanity-'+currentmeta+'-menu-wrapper').addClass('current-meta');}
-				}						
+				}
 			});" . PHP_EOL;
 
 			// --- fix hover styles ---
@@ -945,9 +1004,9 @@ function adminsanity_menu_scripts() {
 			$js .= 'menuselectors = new Array();';
 			foreach ( $selectors as $i => $selector ) {
 				// note: do not escape selector
-				$js .= "menuselectors[" . esc_js( $i ) . "] = '" . $selector . "'; ";				
+				$js .= "menuselectors[" . esc_js( $i ) . "] = '" . $selector . "'; ";
 			}
-			
+
 			// --- loop to add hover events ---
 			$js .= "
 			for (i in menuselectors) {
@@ -959,105 +1018,101 @@ function adminsanity_menu_scripts() {
 					hoverrules += target + ' {';
 					if (color) {hoverrules += 'color:'+color+' !important; -text-fill-color:'+color+' !important; -webkit-text-fill-color:'+color+' !important;';}
 					if (bgcolor) {hoverrules += 'background-color:'+bgcolor+' !important;';  }
-					hoverrules += '} ';						
-					if ( (as_debug == 'all') || (as_debug == 'menu') ) {
-						console.log(color+' on '+bgcolor+' for '+target);
-					}
-
-					/* if (menuselectors[i].indexOf(':hover') > -1) {
-						target = target.replace(':hover', '');
-						if (color) {jQuery(target).data('color', color+' !important').hover(function() {
-							console.log('Hover Color:'+jQuery(this).data('color'));
-							jQuery(this).css('color', jQuery(this).data('color'));
-						}); }
-						if (bgcolor) {jQuery(target).data('bgcolor', bgcolor+' !important').hover(function() {
-							console.log('Hover BG: '+jQuery(this).data('bgcolor'));
-							jQuery(this).css('background-color', jQuery(this).data('bgcolor'));
-						}); }
-					} */
-				}				
+					hoverrules += '} ';
+					if (as_menu_debug) {console.log(color+' on '+bgcolor+' for '+target);}
+				}
 			}
 			as_rules = document.getElementById('adminsanity-extra-styles').innerHTML;
 			document.getElementById('adminsanity-extra-styles').innerHTML = as_rules + hoverrules;" . PHP_EOL;
-			
+
 			// --- open all menu sections ---
 			// TODO: maybe check cookie/user value of first toggle ?
 			// if ( !isset( $_COOKIE['adminsanity_first_toggle'] ) || ( '' == $_COOKIE['adminsanity_first_toggle'] ) ) {
-				foreach ( $labels as $key => $label ) {
-					$js .= "adminsanity_toggle_section(\"" . esc_js( $key ) . "\"); " . PHP_EOL;
-				}
+				// 0.9.9: loop key/label javascript array instead of PHP
+				// foreach ( $labels as $key => $label ) {
+				$js .= "for (i = 0; i < as_meta_keys.length; i++) {";
+					$js .= "adminsanity_toggle_section(key); " . PHP_EOL;
+				$js .= "}";
+				// }
 			// }
 
 		// --- close load menu function ---
-		$js .= '}' . PHP_EOL; 
-		
+		$js .= '}' . PHP_EOL;
+
 	}
 
 	// Document Ready Script
 	// ---------------------
+	
+	$readyjs = '';
 
-	// --- open document ready function ---
-	$readyjs = "jQuery(document).ready(function() {" . PHP_EOL;
+	if ( $meta_menus ) {
 
-		// --- expand menu button ---
-		// 0.9.9: added for expanded full page menu
-		if ( $expander ) {
+		// --- dynamic creation of meta menu ---
+		// 0.9.9: loop key/label javascript array instead of PHP
+		// foreach ( $labels as $key => $label ) {
+		$readyjs .= "for (i = 0; i < as_meta_keys.length; i++) {" . PHP_EOL;
 
-			// --- delayed auto-load of menu ---
-			$readyjs .= "setTimeout(adminsanity_menu_load, 1000);" . PHP_EOL;
-			
-			// --- clone admin menu item  ---
-			$readyjs .= "jQuery('#wp-admin-bar-menu-toggle').clone()" . PHP_EOL;
-			$readyjs .= ".attr('id','wp-admin-bar-expand-toggle').attr('class','admin-bar-extra-menu')" . PHP_EOL;
-			$readyjs .= ".attr('onclick','adminsanity_menu_toggle();').insertAfter('#wp-admin-bar-menu-toggle');" . PHP_EOL;
+			$readyjs .= "key = as_meta_keys[i]; label = as_meta_labels[i];
+			listitem = document.createElement('li');
+			listitem.setAttribute('id', key+'-meta-menu');
+			listitem.setAttribute('class', 'meta-menu meta-menu-open');
+			listitem.setAttribute('onclick', 'adminsanity_menu_meta(\"'+key+'\");');
+			listitem.setAttribute('style', 'display:none;');
+			listitem.innerHTML = label;
+			document.getElementById('adminmenu').appendChild(listitem);" . PHP_EOL;
 
-		}
+			$readyjs .= "if ('content' == key) {
+				firstitem = jQuery('#adminmenu .content-menu-item').first();
+				jQuery('#adminmenu #content-meta-menu').insertBefore(firstitem).show();
+			} else if ('manage' == key) {
+				firstmanage = jQuery('#adminmenu .manage-menu-item').first();
+				jQuery('#adminmenu #manage-meta-menu').insertBefore(firstmanage).show();
+			} else if ( 'extensions' == key) {
+				firstextension = jQuery('#adminmenu .extensions-menu-item').first();
+				jQuery('#adminmenu #extensions-meta-menu').insertBefore(firstextension).show();
+			}" . PHP_EOL;
 
-		if ( $meta_menus ) {
+		$readyjs .= "}" . PHP_EOL;
 
-			// --- dynamic creation of meta menu ---
-			foreach ( $labels as $key => $label ) {
-
-				$readyjs .= "listitem = document.createElement('li');
-				listitem.setAttribute('id', '" . esc_js( $key ) . "-meta-menu');
-				listitem.setAttribute('class', 'meta-menu meta-menu-open');
-				listitem.setAttribute('onclick', 'adminsanity_menu_meta(\"" . esc_js( $key ). "\");');
-				listitem.setAttribute('style', 'display:none;');
-				listitem.innerHTML = '" . esc_js( $label ) . "';
-				document.getElementById('adminmenu').appendChild(listitem);" . PHP_EOL;
-
-				if ( 'content' == $key ) {
-					$readyjs .= "firstitem = jQuery('#adminmenu .content-menu-item').first();
-					jQuery('#adminmenu #content-meta-menu').insertBefore(firstitem).show();" . PHP_EOL;
-				} elseif ( 'manage' == $key ) {
-					$readyjs .= "firstmanage = jQuery('#adminmenu .manage-menu-item').first();
-					jQuery('#adminmenu #manage-meta-menu').insertBefore(firstmanage).show();" . PHP_EOL;
-				} elseif ( 'extensions' == $key ) {
-					$readyjs .= "firstextension = jQuery('#adminmenu .extensions-menu-item').first();
-					jQuery('#adminmenu #extensions-meta-menu').insertBefore(firstextension).show();" . PHP_EOL;
+		// --- highlight currently active meta menu ---
+		$readyjs .= "jQuery('#adminmenu li').each(function() {
+			if (jQuery(this).hasClass('wp-has-current-submenu') || jQuery(this).hasClass('current')) {
+				currentmeta = '';
+				if (jQuery(this).hasClass('content-menu-item')) {
+					currentmeta = 'content';
+				} else if (jQuery(this).hasClass('manage-menu-item')) {
+					currentmeta = 'manage';
+					jQuery('#adminmenu li.separator2').addClass('current-meta');
+				} else if (jQuery(this).hasClass('extensions-menu-item')) {
+					currentmeta = 'extensions';
+					jQuery('#adminmenu li.separator-last').addClass('current-meta');
 				}
+				if ('' != currentmeta) {jQuery('#'+currentmeta+'-meta-menu').addClass('current-meta');}
 			}
+		});" . PHP_EOL;
+	}
+		
+	// --- expand menu button ---
+	// 0.9.9: added for expanded full page menu
+	if ( $expander ) {
 
-			// --- highlight currently active meta menu ---
-			$readyjs .= "jQuery('#adminmenu li').each(function() {
-				if (jQuery(this).hasClass('wp-has-current-submenu') || jQuery(this).hasClass('current')) {
-					currentmeta = '';
-					if (jQuery(this).hasClass('content-menu-item')) {
-						currentmeta = 'content';
-					} else if (jQuery(this).hasClass('manage-menu-item')) {
-						currentmeta = 'manage';
-						jQuery('#adminmenu li.separator2').addClass('current-meta');
-					} else if (jQuery(this).hasClass('extensions-menu-item')) {
-						currentmeta = 'extensions';
-						jQuery('#adminmenu li.separator-last').addClass('current-meta');
-					}
-					if ('' != currentmeta) {jQuery('#'+currentmeta+'-meta-menu').addClass('current-meta');}
-				}		
-			});" . PHP_EOL;
-		}
+		// --- open document ready function ---
+		$readyjs .= "jQuery(document).ready(function() {" . PHP_EOL;
 
-	// --- close document ready functions ---
-	$readyjs .= "});" . PHP_EOL;
+
+		// --- delayed auto-load of menu ---
+		$readyjs .= "setTimeout(adminsanity_menu_load, 1000);" . PHP_EOL;
+
+		// --- clone admin menu item  ---
+		$readyjs .= "jQuery('#wp-admin-bar-menu-toggle').clone()" . PHP_EOL;
+		$readyjs .= ".attr('id','wp-admin-bar-expand-toggle').attr('class','admin-bar-extra-menu')" . PHP_EOL;
+		$readyjs .= ".attr('onclick','adminsanity_menu_toggle();').insertAfter('#wp-admin-bar-menu-toggle');" . PHP_EOL;
+
+		// --- close document ready functions ---
+		$readyjs .= "});" . PHP_EOL;
+	}
+
 
 	// Style Rule Fixes
 	// ----------------
@@ -1077,7 +1132,7 @@ function adminsanity_menu_scripts() {
 		// note: ## specifies exact rule match
 		if ( $meta_menus ) {
 			$selectors[] = array( '##adminmenu a', '#adminmenu .meta-menu' );
-			$selectors[] = array( 
+			$selectors[] = array(
 				// '#adminmenu .wp-has-current-submenu .wp-submenu .wp-submenu-head, #adminmenu .wp-menu-arrow, #adminmenu .wp-menu-arrow div, #adminmenu li.current a.menu-top, #adminmenu li.wp-has-current-submenu a.wp-has-current-submenu, .folded #adminmenu li.current.menu-top, .folded #adminmenu li.wp-has-current-submenu',
 				'#adminmenu li.wp-has-current-submenu a.wp-has-current-submenu',
 				'#adminmenu .meta-menu.current-meta'
@@ -1087,15 +1142,15 @@ function adminsanity_menu_scripts() {
 				'#adminmenu, #adminmenuback, #adminmenuwrap', '#adminmenu .separator2.bgfix, #adminmenu .separator-last.bgfix' );
 		}
 
-		// --- expander scheme styles ---	
+		// --- expander scheme styles ---
 		if ( $expander ) {
 			// --- expand button ---
 			$selectors[] = array( '#collapse-button', '#adminsanity-menu-toggle #expand-button' );
 			$selectors[] = array( '#collapse-button:hover', '#adminsanity-menu-toggle:hover span' );
 			// --- menu headings ---
-			$selectors[] = array( 
+			$selectors[] = array(
 				// '#adminmenu .wp-has-current-submenu .wp-submenu .wp-submenu-head, #adminmenu .wp-menu-arrow, #adminmenu .wp-menu-arrow div, #adminmenu li.current a.menu-top, #adminmenu li.wp-has-current-submenu a.wp-has-current-submenu, .folded #adminmenu li.current.menu-top, .folded #adminmenu li.wp-has-current-submenu',
-				'#adminmenu li.wp-has-current-submenu a.wp-has-current-submenu', 
+				'#adminmenu li.wp-has-current-submenu a.wp-has-current-submenu',
 				'.adminsanity-menu-wrapper.current-meta .adminsanity-menu-heading'
 			);
 			$selectors[] = array( '##adminmenu a', '.adminsanity-menu-heading' );
@@ -1116,14 +1171,12 @@ function adminsanity_menu_scripts() {
 			if (color) {colorrules += dest[i] + ' {color: '+color+';} ';}
 			if (bg) {colorrules += dest[i] + ' {background: '+bg+';} ';}
 			if (bgcolor) {colorrules += dest[i] + ' {background-color: '+bgcolor+';} ';}
-			if ( (as_debug == 'all') || (as_debug == 'menu') ) {
-				console.log(color+' on '+bgcolor+' ('+bg+') for '+src[i]);
-			}
+			if (as_menu_debug) {console.log(color+' on '+bgcolor+' ('+bg+') for '+src[i]);}
 		}
 		as_rules += colorrules; " . PHP_EOL;
 
 	}
-	
+
 	// --- insert style rules in sheet ---
 	$js .= "document.getElementById('adminsanity-extra-styles').innerHTML = as_rules;" . PHP_EOL;
 
@@ -1136,7 +1189,7 @@ function adminsanity_menu_scripts() {
 	echo "<script>" . $js . $readyjs . "</script>";
 }
 
-// ------------------- 
+// -------------------
 // Clone Styles Script
 // -------------------
 function adminsanity_menu_clone_styles_script() {
@@ -1221,9 +1274,12 @@ $js = "(function($){
 // 0.9.9: function prefix name fix
 function adminsanity_menu_settings_fix() {
 
-	if ( !isset( $_REQUEST['page'] ) ) {return;}
-	$page = $_REQUEST['page'];
-	
+	if ( !isset( $_REQUEST['page'] ) ) {
+		return;
+	}
+	// 1.0.0: use sanitize_title on REQUEST value
+	$page = sanitize_title( $_REQUEST['page'] );
+
 	// --- add current menu class to plugin settings menu ---
 	// 0.9.9: fix to check selector length
 	echo "<script>if (!jQuery('#adminmenu li.current').length) {

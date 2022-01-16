@@ -67,12 +67,12 @@ function adminsanity_notices_message_types() {
 	// 0.9.9: added notice-error message class
 	// 0.9.9: added woocmmerce message type
 	$mtypes = array(
-		'error'				=> array( 'classes' => 'notice-error error', 'label' => __( 'Errors', 'adminsanity' ) ),
+		'error'			=> array( 'classes' => 'notice-error error', 'label' => __( 'Errors', 'adminsanity' ) ),
 		'update-nag'		=> array( 'classes' => 'update-nag', 'label' => __( 'Updates', 'adminsanity' ) ),
 		'notice-warning'	=> array( 'classes' => 'notice-warning', 'label' => __( 'Warnings', 'adminsanity' ) ),
-		'updated'			=> array( 'classes' => 'notice-success updated', 'label' => __( 'Messages', 'adminsanity' ) ),
+		'updated'		=> array( 'classes' => 'notice-success updated', 'label' => __( 'Messages', 'adminsanity' ) ),
 		'notice-info'		=> array( 'classes' => 'notice-info', 'label' => __( 'Notices', 'adminsanity' ) ),
-		'commerce'			=> array( 'classes' => 'woocommerce-message', 'label' => __( 'Commerce', 'adminsanity') ),
+		'commerce'		=> array( 'classes' => 'woocommerce-message', 'label' => __( 'Commerce', 'adminsanity') ),
 	);
 	$mtypes = apply_filters( 'adminsanity_notices_message_types', $mtypes );
 	return $mtypes;
@@ -209,14 +209,14 @@ function adminsanity_notices_styles() {
 	// 0.9.9: style/float notices box like screen options/help
 	$css = "#adminsanity-notices-menu {float: left; margin-bottom: 0; min-width: auto; border-radius: 0 0 4px 4px;}
 	#wpbody h3.adminsanity-notices-title {
-		cursor:pointer; margin: 0; padding: 2px 14px; display: inline-block; vertical-align:top;
-		color: #72777c; font-size: 14px; font-weight: normal;}
+	    cursor:pointer; margin: 0; padding: 2px 14px; display: inline-block; vertical-align:top;
+	    color: #72777c; font-size: 14px; font-weight: normal;}
 	#wpbody h3.adminsanity-notices-title:hover {color: #32373c;}
 	#adminsanity-notices-label, #adminsanity-notices-count, #adminsanity-notices-arrow {display: inline-block; vertical-align: middle;}
 	#adminsanity-notices-arrow {font-size: 24px; line-height: 28px; color: #72777c; margin-top: -3px;}
-	#adminsanity-notices-menu.expanded #adminsanity-notices-arrow {margin-bottom: -3px;}
+	#adminsanity-notices-menu.expanded #adminsanity-notices-arrow {margin-bottom: 3px;}
 	.adminsanity-notices-menu {display: none; margin: 2px 7px 0px 7px; padding: 0 1px 4px 1px; min-width: 65px; 
-		text-align: center; font-size: 12px; line-height: 16px; border-left: 1px solid transparent; border-right: 1px solid transparent;}
+	    text-align: center; font-size: 12px; line-height: 16px; border-left: 1px solid transparent; border-right: 1px solid transparent;}
 	.adminsanity-notices-menu.level {min-width: 45px; margin-top: 0px; padding-top: 4px;}
 	.adminsanity-notices-menu.active {background-color: #F7F7F7; border-left: 1px solid #ccc; border-right: 1px solid #ccc;}
 	.adminsanity-notices-menu.level.active {border-top: 1px solid #ccc;}
@@ -234,7 +234,7 @@ function adminsanity_notices_styles() {
 	#adminsanity-notices-wrap div.notice-warning {border-left: 4px solid #FFE900;}
 	#adminsanity-notices-wrap .adminsanity-notices > div {display: block; margin: 10px 0 10px 0; outline: 1px solid #EEEEEE;}
 	.adminsanity-notices-count {
-		display: none; vertical-align: top; margin: 1px 0 0 2px; padding: 0 5px;
+	    display: none; vertical-align: top; margin: 1px 0 0 2px; padding: 0 5px;
 	    min-width: 7px; height: 17px; border-radius: 11px; background-color: #ca4a1f;
 	    color: #fff; font-size: 9px; line-height: 17px; text-align: center; z-index: 26;}
 	#adminsanity-notices-label, #adminsanity-notices-count {vertical-align: middle;}
@@ -254,6 +254,19 @@ function adminsanity_notices_scripts() {
 
 	$js = '';
 
+	// 0.9.9: set notices debug mode
+	/* $valid = false;
+	if ( isset( $_GET['as-debug'] ) ) {
+		$debug = sanitize_title( $_GET['as-debug'] );
+		if ( in_array( $debug, array( 'all', 'notices' ) ) ) {
+			$js .= "as_notices_debug = true; ";
+			$valid = true;
+		}
+	}
+	if ( !$valid ) {
+		$js .= "as_notices_debug = false; ";
+	} */
+	
 	// --- get notice levels and types ---
 	$types = adminsanity_notices_message_levels();
 	$mtypes = adminsanity_notices_message_types();
