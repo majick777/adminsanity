@@ -3,8 +3,8 @@
 /*
 Plugin Name: AdminSanity
 Plugin URI: https://wpmedic.tech/adminsanity/
-Description: Add Sanity back to your WordPress Admin Area
-Version: 0.9.9
+Description: Add Sanity back to your WordPress Admin Area.
+Version: 1.0.0
 Author: Tony Hayes
 Author URI: https://wpmedic.tech
 GitHub Plugin URI: majick777/adminsanity
@@ -13,7 +13,6 @@ GitHub Plugin URI: majick777/adminsanity
 // Development TODOs: add plugin settings loader
 
 // --- define plugin constants ---
-define( 'ADMINSANITY_VERSION', '0.9.9' );
 define( 'ADMINSANITY_DIR', dirname( __FILE__ ) );
 define( 'ADMINSANITY_URL', plugins_url( '', __FILE__ ) );
 
@@ -54,7 +53,7 @@ $adminsanity = array( 'load' => $load );
 
 // --- load plugin modules ---
 $modules_loaded = false;
-$includes = array( 'bar', 'menu', 'notices'	);
+$includes = array( 'bar', 'menu', 'notices' );
 foreach ( $includes as $include ) {
 	if ( $load[$include] ) {
 		$filepath = ADMINSANITY_DIR . '/adminsanity/adminsanity-' . $include . '.php';

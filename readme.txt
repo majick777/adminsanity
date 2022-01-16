@@ -3,8 +3,8 @@ Contributors: majick
 Donate link: https://wpmedic.tech
 Tags: wordpress admin, admin menu, admin notices, admin bar, cleaner
 Requires at least: 4.0.0
-Tested up to: 5.4.0
-Stable tag: trunk
+Tested up to: 5.6.2
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -109,7 +109,7 @@ Yes. The following additional features can be disabled using constants or filter
 
 = Can I use this as a must-use plugin? =
 
-Yes. Simply copy the module file(s) you wish to use into your `/wp-content/mu-plugins/` directory. You can also copy the entire plugin into that directory if you wish.
+Yes. Simply copy the individual module file(s) you wish to use into your `/wp-content/mu-plugins/` directory. Alternatively you can also copy the entire plugin into that directory if you wish.
 
 = Can I keep the position of some items in the Admin Menu? =
 
@@ -119,6 +119,10 @@ Yes. Although tricky, a filter for this was included in the initial proof of con
 == Screenshots ==
 
 == Changelog ==
+
+= 1.0.0 =
+* Fixed: explicitly sanitize and/or validate GET/REQUEST values
+* Fixed: added missing menu style media query close bracket
 
 = 0.9.9 =
 * Admin Menu: add full page expanded admin menu
