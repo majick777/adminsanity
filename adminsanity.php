@@ -4,7 +4,7 @@
 Plugin Name: AdminSanity
 Plugin URI: https://wpmedic.tech/adminsanity/
 Description: Add Sanity back to your WordPress Admin Area.
-Version: 1.0.1
+Version: 1.0.2
 Author: Tony Hayes
 Author URI: https://wpmedic.tech
 GitHub Plugin URI: majick777/adminsanity
