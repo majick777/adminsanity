@@ -71,12 +71,12 @@ function adminsanity_notices_message_types() {
 	// 0.9.9: added notice-error message class
 	// 0.9.9: added woocmmerce message type
 	$mtypes = array(
-		'error'			=> array( 'classes' => 'notice-error error', 'label' => __( 'Errors', 'adminsanity' ) ),
-		'update-nag'		=> array( 'classes' => 'update-nag', 'label' => __( 'Updates', 'adminsanity' ) ),
-		'notice-warning'	=> array( 'classes' => 'notice-warning', 'label' => __( 'Warnings', 'adminsanity' ) ),
-		'updated'		=> array( 'classes' => 'notice-success updated', 'label' => __( 'Messages', 'adminsanity' ) ),
-		'notice-info'		=> array( 'classes' => 'notice-info', 'label' => __( 'Notices', 'adminsanity' ) ),
-		'commerce'		=> array( 'classes' => 'woocommerce-message', 'label' => __( 'Commerce', 'adminsanity') ),
+		'error'          => array( 'classes' => 'notice-error error', 'label' => __( 'Errors', 'adminsanity' ) ),
+		'update-nag'     => array( 'classes' => 'update-nag', 'label' => __( 'Updates', 'adminsanity' ) ),
+		'notice-warning' => array( 'classes' => 'notice-warning', 'label' => __( 'Warnings', 'adminsanity' ) ),
+		'updated'        => array( 'classes' => 'notice-success updated', 'label' => __( 'Messages', 'adminsanity' ) ),
+		'notice-info'    => array( 'classes' => 'notice-info', 'label' => __( 'Notices', 'adminsanity' ) ),
+		'commerce'       => array( 'classes' => 'woocommerce-message', 'label' => __( 'Commerce', 'adminsanity') ),
 	);
 	$mtypes = apply_filters( 'adminsanity_notices_message_types', $mtypes );
 	return $mtypes;
@@ -258,7 +258,7 @@ function adminsanity_notices_scripts() {
 
 	$js = '';
 
-	// 0.9.9: set notices debug mode
+	// 0.9.9: set notices script debug mode
 	/* $valid = false;
 	if ( isset( $_GET['as-debug'] ) ) {
 		$debug = sanitize_title( $_GET['as-debug'] );
@@ -291,10 +291,12 @@ function adminsanity_notices_scripts() {
 	
 	// 0.9.9: prefix admin notice variables
 	$js .= "var as_notices_selector = '" . implode( ',', $selectors ) . "';
-	as_notices_count = 0; as_notice_type_count = 0; as_notices_height = 0;" . PHP_EOL;
-	$i = 0; $js .= "var as_notice_levels = new Array(); ";
+	as_notices_count = 0; as_notice_type_count = 0; as_notices_height = 0;" . "\n";
+	$i = 0;
+	$js .= "var as_notice_levels = new Array(); ";
 	foreach ( $types as $key => $type ) {
-		$js .= "as_notice_levels[" . $i . "] = '" . $key . "'; "; $i++;
+		$js .= "as_notice_levels[" . $i . "] = '" . $key . "'; ";
+		$i++;
 	}	
 	// 0.9.9: set class lists by key
 	$js .= "var as_notice_types = new Array(); as_notice_classes = new Array();";
@@ -304,7 +306,7 @@ function adminsanity_notices_scripts() {
 		$js .= "as_notice_classes['" . $i . "'] = '" . $type['classes'] . "'; ";
 		$i++;
 	}
-	$js .= PHP_EOL;
+	$js .= "\n";
 
 	// --- move out naughty non-notices printed in admin notices ---
 	foreach ( $types as $type => $label ) {
@@ -313,7 +315,7 @@ function adminsanity_notices_scripts() {
 			$js .= "jQuery('#adminsanity-" . esc_attr( $type ) . "-notices').children()";
 			// $js .= ".not('div.update-nag, div.updated, div.error, div.notice-info, div.notice-warning, div.notice-success, div.woocommerce-message')";
 			$js .= ".not('" . implode(',', $unselectors ) . "')";
-			$js .= ".insertAfter(jQuery('#admin-top-" . esc_attr( $type ) . "-notices'));" . PHP_EOL;
+			$js .= ".insertAfter(jQuery('#admin-top-" . esc_attr( $type ) . "-notices'));" . "\n";
 		}
 	}
 
@@ -410,21 +412,20 @@ function adminsanity_notices_scripts() {
 		jQuery('.adminsanity-notices-menu').removeClass('active');
 		jQuery('#adminsanity-'+type+'-notices-menu').addClass('active');
 		adminsanity_notices_height(750);
-	}" . PHP_EOL;
+	}" . "\n";
 	
-
-	// note: this is from /wp-admin/js/common.js... to move the notices to below first h1/h2
+	// note: this is from /wp-admin/js/common.js... to move the notices to below the first h1/h2
 	// jQuery( 'div.updated, div.error, div.notice' ).not( '.inline, .below-h2' ).insertAfter( jQuery( '.wrap h1, .wrap h2' ).first() ); }
 
 	// --- prevent notices from being moved by common.js ---
-	$js .= "jQuery(as_notices_selector).not('.inline').addClass('below-h2').addClass('noticetemp');";
+	$js .= "jQuery(as_notices_selector).not('.inline').addClass('below-h2').addClass('noticetemp');" . "\n";
 
 	// --- remove the below-h2 class after document loaded ---		
 	$js .= "jQuery(document).ready(function() { setTimeout(function() {		
 		jQuery('div.update-nag, div.updated, div.error, div.notice-success, div.notice-info, div.notice-warning').each(function() {
 			if (jQuery(this).hasClass('noticetemp')) {jQuery(this).removeClass('below-h2').removeClass('noticetemp');}
 		});		
-	}, 1000); });";
+	}, 1000); });" . "\n";
 
 	// --- filter and output ---
 	$js = apply_filters( 'adminsanity_notices_scripts', $js );	
@@ -460,19 +461,29 @@ function adminsanity_notices_test() {
 // -----------
 function adminsanity_notice_test() {
 	global $adminsanity;
-	if ( !isset( $adminsanity['test-count'] ) ) {$adminsanity['test-count'] = 0;}
+	if ( !isset( $adminsanity['test-count'] ) ) {
+		$adminsanity['test-count'] = 0;
+	}
 	$adminsanity['test-count']++;
 	
-	if ( $adminsanity['test-count'] == 1 ) {$class = 'error';}
-	elseif ( $adminsanity['test-count'] == 2 ) {$class = 'notice-error';}
-	elseif ( $adminsanity['test-count'] == 3 ) {$class = 'update-nag';}
-	elseif ( $adminsanity['test-count'] == 4 ) {$class = 'notice notice-warning';}
-	elseif ( $adminsanity['test-count'] == 5 ) {$class = 'updated';}
-	elseif ( $adminsanity['test-count'] == 5 ) {$class = 'notice notice-info';}
-	elseif ( $adminsanity['test-count'] == 7 ) {$class = 'notice notice-success';}
+	if ( $adminsanity['test-count'] == 1 ) {
+		$class = 'error';
+	} elseif ( $adminsanity['test-count'] == 2 ) {
+		$class = 'notice-error';
+	} elseif ( $adminsanity['test-count'] == 3 ) {
+		$class = 'update-nag';
+	} elseif ( $adminsanity['test-count'] == 4 ) {
+		$class = 'notice notice-warning';
+	} elseif ( $adminsanity['test-count'] == 5 ) {
+		$class = 'updated';
+	} elseif ( $adminsanity['test-count'] == 6 ) {
+		$class = 'notice notice-info';
+	} elseif ( $adminsanity['test-count'] == 7 ) {
+		$class = 'notice notice-success';
+	}
 	
 	echo '<div class="' . esc_attr( $class ) . '">';
-	echo 'This is a Test Notice with class "' . esc_attr( $class ) . '".';
+		echo 'This is a Test Notice with class "' . esc_attr( $class ) . '".';
 	echo '</div>';
 }
 

@@ -64,11 +64,11 @@ if ( !is_admin() ) {
 	$frontend = true;
 	// 1.0.1: fix to frontent constant (remove CYCLER_)
 	if ( defined( 'ADMINSANITY_BAR_FRONTEND' ) ) {
-		$frontend = (bool)ADMINSANITY_BAR_FRONTEND;
+		$frontend = (bool) ADMINSANITY_BAR_FRONTEND;
 	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
-		$frontend = (bool)adminsanity_get_setting( 'bar_frontend' );
+		$frontend = (bool) adminsanity_get_setting( 'bar_frontend' );
 	} else {
-		$frontend = (bool)apply_filters( 'adminsanity_bar_frontend', $frontend );
+		$frontend = (bool) apply_filters( 'adminsanity_bar_frontend', $frontend );
 	}
 	if ( !$frontend ) {
 		return;
@@ -107,7 +107,9 @@ function adminsanity_bar_default() {
 
 	// --- initialize new admin bar class ---
 	$admin_bar_class = apply_filters( 'wp_admin_bar_class', 'WP_Admin_Bar' );
-	if ( !class_exists( $admin_bar_class ) ) {return false;}
+	if ( !class_exists( $admin_bar_class ) ) {
+		return false;
+	}
 	$wp_admin_bar = new $admin_bar_class;
 	$wp_admin_bar->initialize();
 
@@ -153,10 +155,11 @@ function adminsanity_bar_default() {
 // ------------------
 // Current Screen Fix
 // ------------------
-// since admin_bar_init is hooked to admin_init, current screen object is not loaded,
-// which throws current_screen->base property not exists errors in wp_admin_bar_edit_menu
+// since admin_bar_init is hooked to admin_init, current screen object is not loaded
+// which gives current_screen->base property not exists errors in wp_admin_bar_edit_menu (/wp-includes/admin-bar.php)
 // ...so this duplicates admin.php current screen initialization to fix that (yeesh)
 function adminsanity_current_screen_fix() {
+
 	global $adminsanity;
 
 	// --- fix not needed on frontend ---
@@ -167,7 +170,7 @@ function adminsanity_current_screen_fix() {
 	// --- check current screen ---
 	$current_screen = get_current_screen();
 	if ( $adminsanity['bar-debug'] ) {
-		echo '<span id="current-screen-test" style="display:none;">' . print_r( $current_screen, true ) . '</span>';
+		echo '<span id="current-screen-test" style="display:none;">Current Screen A:' . esc_html( print_r( $current_screen, true ) ) . '</span>' . "\n";
 	}
 	if ( !is_object( $current_screen ) || !property_exists( $current_screen, 'base' ) ) {
 		global $pagenow;
@@ -178,7 +181,8 @@ function adminsanity_current_screen_fix() {
 		}
 		if ( isset( $_REQUEST['post_type'] ) ) {
 			// 1.0.0: use sanitize_title on REQUEST value
-			$post_type = sanitize_title( $post_type );
+			// 1.0.2: fix to gone-missing $_REQUEST prefix
+			$post_type = sanitize_title( $_REQUEST['post_type'] );
 			if ( post_type_exists( $post_type ) ) {
 				$typenow = $post_type;
 			} else {
@@ -213,14 +217,25 @@ function adminsanity_current_screen_fix() {
 		// eg. WooCommerce Screen class, but possibly with other plugins hooking to that action
 		// set_current_screen( $pagenow );
 		// so instead we duplicate function WP_Screen->set_current_screen but without firing the action
-		global $current_screen, $taxnow, $typenow;
+		global $current_screen, $taxnow, $typenow, $post;
 		$current_screen = WP_Screen::get( $pagenow );
 		$taxnow = $current_screen->taxonomy;
 		$typenow = $current_screen->post_type;
+
+		// 1.0.2: fix for undefined post->post_type, also in wp_admin_bar_edit_menu
+		// (base is now set, but post object may not yet be set on post edit pages)
+		if ( 'post' == $current_screen->base ) {
+			$post = get_post();
+			if ( !is_object( $post ) && isset( $_REQUEST['post'] ) ) {
+				$post = get_post( absint( $_REQUEST['post'] ) );
+			}
+		}
+			
 	}
 	if ( $adminsanity['bar-debug'] ) {
 		$current_screen = get_current_screen();
-		echo '<span id="current-screen-test" style="display:none;">' . print_r( $current_screen, true ) . '</span>';
+		$post = get_post();
+		echo '<span id="current-screen-test" style="display:none;">Current Screen B: ' . esc_html( print_r( $current_screen, true ) ) .  '</span>' . "\n";
 	}
 }
 
@@ -252,11 +267,11 @@ function adminsanity_bar_replace() {
 	// 0.9.9: check bar cycler settings
 	$cycler = true;
 	if ( defined( 'ADMINSANITY_BAR_CYCLER' ) ) {
-		$cycler = (bool)ADMINSANITY_BAR_CYCLER;
+		$cycler = (bool) ADMINSANITY_BAR_CYCLER;
 	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
-		$cycler = (bool)adminsanity_get_setting( 'bar_cycler' );
+		$cycler = (bool) adminsanity_get_setting( 'bar_cycler' );
 	} else {
-		$cycler = (bool)apply_filters( 'adminsanity_bar_cycler', $cycler );
+		$cycler = (bool) apply_filters( 'adminsanity_bar_cycler', $cycler );
 	}
 
 	// --- add bar cycler node to admin bar ---
@@ -312,11 +327,11 @@ function adminsanity_bar_replace() {
 	// 0.9.9: check bar dropdown setting
 	$dropdown = true;
 	if ( defined( 'ADMINSANITY_BAR_DROPDOWN' ) ) {
-		$dropdown = (bool)ADMINSANITY_BAR_DROPDOWN;
+		$dropdown = (bool) ADMINSANITY_BAR_DROPDOWN;
 	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
-		$dropdown = (bool)adminsanity_get_setting( 'bar_dropdown' );
+		$dropdown = (bool) adminsanity_get_setting( 'bar_dropdown' );
 	} else {
-		$dropdown = (bool)apply_filters( 'adminsanity_bar_dropdown', $dropdown );
+		$dropdown = (bool) apply_filters( 'adminsanity_bar_dropdown', $dropdown );
 	}
 
 	if ( $dropdown ) {
@@ -357,13 +372,13 @@ function adminsanity_bar_replace() {
 	// --- debug output ---
 	if ( $adminsanity['bar-debug'] ) {
 		echo "<span id='bar-debug' style='display:none;'>";
-		// echo "Default Bar: " . print_r( $default_bar, true ). "<br>" . PHP_EOL;
-		echo "Default Nodes: " . print_r( $default_nodes, true ). "<br>" . PHP_EOL;
-		echo "Default Parents: " . print_r( $default_parents, true ). "<br>" . PHP_EOL;
-		// echo "Admin Bar: " . print_r( $wp_admin_bar, true ) . "<br>" . PHP_EOL;
-		echo "Admin Bar Nodes: " . print_r( $admin_bar_nodes, true ). "<br>" . PHP_EOL;
-		echo "New Parents: " . print_r( $new_parents, true ) . "<br>" . PHP_EOL;
-		echo "New Admin Bar: " . print_r( $new_admin_bar, true ) . "<br>" . PHP_EOL;
+		// echo "Default Bar: " . esc_html( print_r( $default_bar, true ) ) . "<br>" . "\n";
+		echo "Default Nodes: " . esc_html( print_r( $default_nodes, true ) ) . "<br>" . "\n";
+		echo "Default Parents: " . esc_html( print_r( $default_parents, true ) ) . "<br>" . "\n";
+		// echo "Admin Bar Object: " . esc_html( print_r( $wp_admin_bar, true ) ) . "<br>" . "\n";
+		echo "Admin Bar Nodes: " . esc_html( print_r( $admin_bar_nodes, true ) ) . "<br>" . "\n";
+		echo "New Parents: " . esc_html( print_r( $new_parents, true ) ) . "<br>" . "\n";
+		echo "New Admin Bar: " . esc_html( print_r( $new_admin_bar, true ) ) . "<br>" . "\n";
 		echo "</span>";
 	}
 
@@ -385,22 +400,22 @@ function adminsanity_bar_styles() {
 	// 0.9.9: check bar cycler settings
 	$cycler = true;
 	if ( defined( 'ADMINSANITY_BAR_CYCLER' ) ) {
-		$cycler = (bool)ADMINSANITY_BAR_CYCLER;
+		$cycler = (bool) ADMINSANITY_BAR_CYCLER;
 	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
-		$cycler = (bool)adminsanity_get_setting( 'bar_cycler' );
+		$cycler = (bool) adminsanity_get_setting( 'bar_cycler' );
 	} else {
-		$cycler = (bool)apply_filters( 'adminsanity_bar_cycler', $cycler );
+		$cycler = (bool) apply_filters( 'adminsanity_bar_cycler', $cycler );
 	}
 
 	// --- get bar dropdown setting ---
 	// 0.9.9: check bar dropdown settings
 	$dropdown = true;
 	if ( defined( 'ADMINSANITY_BAR_DROPDOWN' ) ) {
-		$dropdown = (bool)ADMINSANITY_BAR_DROPDOWN;
+		$dropdown = (bool) ADMINSANITY_BAR_DROPDOWN;
 	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
-		$dropdown = (bool)adminsanity_get_setting( 'bar_dropdown' );
+		$dropdown = (bool) adminsanity_get_setting( 'bar_dropdown' );
 	} else {
-		$dropdown = (bool)apply_filters( 'adminsanity_bar_dropdown', $dropdown );
+		$dropdown = (bool) apply_filters( 'adminsanity_bar_dropdown', $dropdown );
 	}
 
 	if ( !$cycler && !$dropdown ) {
@@ -419,7 +434,7 @@ function adminsanity_bar_styles() {
 		#wpadminbar #wp-toolbar #wp-admin-bar-root-default.default-menu-items li.admin-bar-extra-menu,
 		#wpadminbar #wp-toolbar #wp-admin-bar-root-default.extra-menu-items li.admin-bar-default-menu {display:none;}
 		#wpadminbar #wp-toolbar #wp-admin-bar-root-default #wp-admin-bar-menu-cycler {display: block;}
-		#wpadminbar.dropdown #wp-toolbar #wp-admin-bar-root-default #wp-admin-bar-menu-cycler {display: inline-block;}' . PHP_EOL;
+		#wpadminbar.dropdown #wp-toolbar #wp-admin-bar-root-default #wp-admin-bar-menu-cycler {display: inline-block;}' . "\n";
 
 	}
 
@@ -438,7 +453,7 @@ function adminsanity_bar_styles() {
 		#wpadminbar.dropdown #wp-toolbar #wp-admin-bar-menu-retract a {margin-right: 0px; padding-right: 0px;}
 		#wpadminbar.dropdown #wp-toolbar #wp-admin-bar-menu-retract .ab-icon:before {content: "\f343"; top: 3px;}
 		#wpadminbar.dropdown #wp-admin-bar-top-secondary {z-index: 99999;}
-		#wpadminbar.dropdown ul, #wpadminbar.dropdown ul li {z-index: 99998;}' . PHP_EOL;
+		#wpadminbar.dropdown ul, #wpadminbar.dropdown ul li {z-index: 99998;}' . "\n";
 
 		// --- dropdown bar ---
 		// 0.9.9: add dropdown styles
@@ -475,8 +490,8 @@ function adminsanity_bar_styles() {
 		@media screen and (max-width: 600px) {
 			#wpadminbar.dropdown .ab-top-menu>.menupop>.ab-sub-wrapper {width: auto; left: inherit;}
 		}
-		';
-		// TODO: fix admin bar underside padding on mobile width
+		' . "\n";
+		// TODO: fix admin bar underside padding on mobile widths
 	}
 
 	// --- filter and output ---
@@ -488,7 +503,7 @@ function adminsanity_bar_styles() {
 // Admin Bar Scripts
 // -----------------
 // 0.9.9: emqueue scripts with wp_after_admin_bar_render hook
-add_action( 'wp_after_admin_bar_render', 'adminsanity_bar_enqueue_scripts');
+add_action( 'wp_after_admin_bar_render', 'adminsanity_bar_enqueue_scripts' );
 function adminsanity_bar_enqueue_scripts() {
 	add_action( 'admin_footer', 'adminsanity_bar_scripts' );
 	add_action( 'wp_footer', 'adminsanity_bar_scripts' );
@@ -501,25 +516,25 @@ function adminsanity_bar_scripts() {
 	// 0.9.9: check bar cycler setting
 	$cycler = true;
 	if ( defined( 'ADMINSANITY_BAR_CYCLER' ) ) {
-		$cycler = (bool)ADMINSANITY_BAR_CYCLER;
+		$cycler = (bool) ADMINSANITY_BAR_CYCLER;
 	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
-		$cycler = (bool)adminsanity_get_setting( 'bar_cycler' );
+		$cycler = (bool) adminsanity_get_setting( 'bar_cycler' );
 	} else {
-		$cycler = (bool)apply_filters( 'adminsanity_bar_cycler', $cycler );
+		$cycler = (bool) apply_filters( 'adminsanity_bar_cycler', $cycler );
 	}
 
 	// --- get dropdown toggle setting ---
 	// 0.9.9: check bar dropdown settings
 	$dropdown = true;
 	if ( defined( 'ADMINSANITY_BAR_DROPDOWN' ) ) {
-		$dropdown = (bool)ADMINSANITY_BAR_DROPDOWN;
+		$dropdown = (bool) ADMINSANITY_BAR_DROPDOWN;
 	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
-		$dropdown = (bool)adminsanity_get_setting( 'bar_dropdown' );
+		$dropdown = (bool) adminsanity_get_setting( 'bar_dropdown' );
 	} else {
-		$dropdown = (bool)apply_filters( 'adminsanity_bar_dropdown', $dropdown );
+		$dropdown = (bool) apply_filters( 'adminsanity_bar_dropdown', $dropdown );
 	}
 
-	// 0.9.9: set bar debug mode
+	// 0.9.9: set bar script debug mode
 	/* $valid = false;
 	if ( isset( $_GET['as-debug'] ) ) {
 		$debug = sanitize_title( $_GET['as-debug'] );
@@ -536,7 +551,7 @@ function adminsanity_bar_scripts() {
 	// 0.9.9: secondary menu and dropdown background fix
 	// 0.9.9: added responsive dropdown resizing
 	// $js .= "var as_bar_arrows = false; ";
-	$js .= "var as_bar_background = jQuery('#wpadminbar').css('background');" . PHP_EOL;
+	$js .= "var as_bar_background = jQuery('#wpadminbar').css('background');" . "\n";
 	$js .= "jQuery(document).ready(function() {
 		jQuery('#wp-admin-bar-root-default, #wp-admin-bar-top-secondary').css('background',as_bar_background);
 		adminsanity_bar_items(); adminsanity_bar_height();
@@ -577,7 +592,7 @@ function adminsanity_bar_scripts() {
 			}
 		}
 		jQuery('#wpadminbar').css('height','').css('height',jQuery('#wpadminbar').prop('scrollHeight'));
-	}" . PHP_EOL;
+	}" . "\n";
 
 	// --- check bar items function ---
 	// 0.9.9: add fix for admin bar items background color
@@ -592,7 +607,7 @@ function adminsanity_bar_scripts() {
 				jQuery(this).addClass('admin-bar-extra-menu');
 			}
 		});
-	}" . PHP_EOL;
+	}" . "\n";
 
 	if ( !$cycler && !$dropdown ) {
 		return;
@@ -613,7 +628,7 @@ function adminsanity_bar_scripts() {
 			adminsanity_bar_height();
 			if (typeof adminsanity_bar_responsive == 'function') {adminsanity_bar_responsive();}
 			else {jQuery('#wpadminbar').css('height','').css('height',jQuery('#wpadminbar').prop('scrollHeight'));}
-		}" . PHP_EOL;
+		}" . "\n";
 	}
 
 	if ( $dropdown ) {
@@ -640,7 +655,7 @@ function adminsanity_bar_scripts() {
 				jQuery('#wpadminbar').css('margin-top','');
 				jQuery('#wpadminbar').css('height','').css('height',jQuery('#wpadminbar').prop('scrollHeight'));
 			}
-		}" . PHP_EOL;
+		}" . "\n";
 
 		// --- dropdown toggle function ---
 		// 0.9.9 add dropdown toggle function
@@ -680,7 +695,7 @@ function adminsanity_bar_scripts() {
 				jQuery('#wpadminbar').css('height','0').animate({'height':barheight},1500);
 				adminsanity_bar_responsive();
 			}
-		}" . PHP_EOL;
+		}" . "\n";
 
 		// --- submenu dropdown toggle ----
 		// 0.9.9: added submenu dropdown function
@@ -694,7 +709,7 @@ function adminsanity_bar_scripts() {
 				jQuery(id).parent().css('height',''); adminsanity_bar_responsive();
 				jQuery(id).removeClass('dashicons-arrow-up').addClass('dashicons-arrow-down');
 			}
-		}" . PHP_EOL;
+		}" . "\n";
 	}
 
 	// --- filter and output ---

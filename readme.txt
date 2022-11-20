@@ -3,8 +3,8 @@ Contributors: majick
 Donate link: https://wpmedic.tech
 Tags: wordpress admin, admin menu, admin notices, admin bar, cleaner
 Requires at least: 4.0.0
-Tested up to: 5.8
-Stable tag: 1.0.1
+Tested up to: 6.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -122,6 +122,11 @@ Yes. Although tricky, a filter for this was included in the initial proof of con
 == Screenshots ==
 
 == Changelog ==
+
+= 1.0.2 =
+* Updates: Plugin Panel (1.2.8)
+* Admin Bar: fix undefined post_type on post list/edit screens
+* Admin Menu: fix undefined index warning for debug mode
 
 = 1.0.1 =
 * Added: Plugin Panel library v1.2.2
