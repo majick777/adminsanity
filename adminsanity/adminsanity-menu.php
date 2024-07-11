@@ -66,7 +66,34 @@ if ( defined( 'ADMINSANITY_LOAD_MENU' ) && !ADMINSANITY_LOAD_MENU ) {
 
 // --- allow for use as an mu-plugin ---
 // 0.9.9: attempt to prevent double load conflicts
-if ( !function_exists( 'adminsanity_menu_store_default' ) ) {
+if ( !function_exists( 'adminsanity_menu_loader' ) ) {
+
+// ------------------
+// Menu Loader Action
+// ------------------
+// 1.0.3: added loader action to avoid block editor conflicts
+add_action( 'admin_menu', 'adminsanity_menu_loader', 9 );
+function adminsanity_menu_loader() {
+
+	// --- check for block editor or gutenberg plugin page ---
+	if ( function_exists( 'get_current_screen' ) ) {
+		$current_screen = get_current_screen();
+		if ( is_object( $current_screen ) && method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor() ) {
+			return;
+		}
+	} elseif ( function_exists( 'is_gutenberg_page' ) && is_gutenberg_page() ) {
+		return;
+	}
+
+	// 1.0.3: enqueue scripts/styles only if admin_menu action called
+	add_action( 'admin_footer', 'adminsanity_menu_scripts', 99 );
+	add_action( 'admin_print_styles', 'adminsanity_menu_styles');
+
+	// 1.0.3: custom menu order only if admin menu action called
+	add_action( 'custom_menu_order', '__return_true', 11 );
+	add_filter( 'menu_order', 'adminsanity_menu_split_order', 20 );
+	
+}
 
 // ------------------------
 // Store Default Admin Menu
@@ -75,7 +102,7 @@ add_action( '_network_admin_menu', 'adminsanity_menu_store_default', 0 );
 add_action( '_user_admin_menu', 'adminsanity_menu_store_default', 0 );
 add_action( '_admin_menu', 'adminsanity_menu_store_default', 0 );
 function adminsanity_menu_store_default() {
-	global $menu, $submenu, $adminsanity;
+	global $adminsanity, $menu, $submenu;
 	$adminsanity['default_menu'] = $menu;
 	$adminsanity['default_submenu'] = $submenu;
 }
@@ -83,8 +110,6 @@ function adminsanity_menu_store_default() {
 // ------------------------
 // Ordered Split Admin Menu
 // ------------------------
-add_action( 'custom_menu_order', '__return_true', 11 );
-add_filter( 'menu_order', 'adminsanity_menu_split_order', 20 );
 function adminsanity_menu_split_order( $menu_order ) {
 
 	global $menu, $submenu, $adminsanity;
@@ -190,8 +215,15 @@ function adminsanity_menu_split_order( $menu_order ) {
 	// Main Menu Reorder
 	// -----------------
 
+	// --- filter menu items to move to top ---
+	// 1.0.3: added for top menu items (above mega menus)
+	$top = apply_filters( 'adminsanity_menu_top_positions', array() );
+
+	// --- filter menu items whose position to keep ---
+	$keep = apply_filters( 'adminsanity_menu_keep_positions', array() );
+
 	// --- set empty split menu arrays ---
-	$menua = $menua2 = $menub = $menuc = array();
+	$menutop = $menua = $menua2 = $menub = $menuc = array();
 
 	// --- loop the menu items ---
 	foreach ( $menu as $i => $item ) {
@@ -202,24 +234,31 @@ function adminsanity_menu_split_order( $menu_order ) {
 			}
 		}
 
-		// 0.9.6: remove some separators from menu order temporarily
-		// 0.9.6: check for explicit content items for menu a
-		$separators = array( 'separator1', 'separator2', 'separator-last' );
-		$contentitems = array( 'upload.php', 'link-manager.php', 'edit-comments.php' );
-		if ( $item[2] == 'separator1' ) {
-			$separator1 = array( $i => 'separator1' );
-		} elseif ( !in_array( $item[2], $separators ) ) {
-			if ( ( 'index.php' == $item[2] ) || ( strpos( $item[2], 'edit.php' ) === 0 ) ) {
-				$menua[$i] = $item[2];
-			} elseif ( in_array( $item[2], $contentitems ) ) {
-				$menua2[$i] = $item[2];
-			} elseif ( $item[2] == 'options.php' ) {
-				$menub[$i] = $item[2];
-			} elseif ( !$found ) {
-				$menuc[$i] = $item[2];
-			} else {
-				$menub[$i] = $item[2];
+		// 1.0.3: check for top menu position Items
+		if ( in_array( $item[2], $top ) ) {
+			$menutop[] = $item[2];
+		} else {
+
+			// 0.9.6: remove some separators from menu order temporarily
+			// 0.9.6: check for explicit content items for menu a
+			$separators = array( 'separator1', 'separator2', 'separator-last' );
+			$contentitems = array( 'upload.php', 'link-manager.php', 'edit-comments.php' );
+			if ( $item[2] == 'separator1' ) {
+				$separator1 = array( $i => 'separator1' );
+			} elseif ( !in_array( $item[2], $separators ) ) {
+				if ( ( 'index.php' == $item[2] ) || ( strpos( $item[2], 'edit.php' ) === 0 ) ) {
+					$menua[$i] = $item[2];
+				} elseif ( in_array( $item[2], $contentitems ) ) {
+					$menua2[$i] = $item[2];
+				} elseif ( $item[2] == 'options.php' ) {
+					$menub[$i] = $item[2];
+				} elseif ( !$found ) {
+					$menuc[$i] = $item[2];
+				} else {
+					$menub[$i] = $item[2];
+				}
 			}
+
 		}
 	}
 	// 0.9.6: move separator1 to split menu A
@@ -228,9 +267,6 @@ function adminsanity_menu_split_order( $menu_order ) {
 		$menua[] = $item;
 	}
 	unset( $menua2 );
-
-	// --- filter menu items whose position to keep ---
-	$keep = apply_filters( 'adminsanity_menu_keep_positions', array() );
 
 	// --- exception - move Settings item to top of section! ---
 	// 0.9.6: do not rely on separator2 position
@@ -314,9 +350,9 @@ function adminsanity_menu_split_order( $menu_order ) {
 	// 1.0.2: fix to incorrect get key (as-menu-debug)
 	if ( isset( $_GET['as-debug'] ) && in_array( $_GET['as-debug'], array( 'all', 'menu' ) ) ) {
 		echo '<span style="display:none;">[AdminSanity]';
-		echo 'Menu Items A: ' . esc_html( print_r( $menua_keep, true ) ) . "\n";
-		echo 'Menu Items B: ' . esc_html( print_r( $menub_keep, true ) ) . "\n";
-		echo 'Menu Items C: ' . esc_html( print_r( $menuc_keep, true ) ) . "\n";
+		echo 'Keep Menu Items A: ' . esc_html( print_r( $menua_keep, true ) ) . "\n";
+		echo 'Keep Menu Items B: ' . esc_html( print_r( $menub_keep, true ) ) . "\n";
+		echo 'Keep Menu Items C: ' . esc_html( print_r( $menuc_keep, true ) ) . "\n";
 		echo '</span>';
 	}
 
@@ -332,6 +368,17 @@ function adminsanity_menu_split_order( $menu_order ) {
 		$menuc = array_flip( array_merge( array_flip( $menuc_keep ), array_flip( $menuc ) ) );
 	}
 
+	// --- debug point ---
+	// 1.0.3: update debug point output
+	if ( isset( $_GET['as-debug'] ) && in_array( $_GET['as-debug'], array( 'all', 'menu' ) ) ) {
+		echo '<span style="display:none;">[AdminSanity]';
+		echo 'Top Menu Items: ' . esc_html( print_r( $menutop, true ) ) . "\n";
+		echo 'Menu Items A: ' . esc_html( print_r( $menua, true ) ) . "\n";
+		echo 'Menu Items B: ' . esc_html( print_r( $menub, true ) ) . "\n";
+		echo 'Menu Items C: ' . esc_html( print_r( $menuc, true ) ) . "\n";
+		echo '</span>';
+	}
+	
 	// --- resort split menus and merge to final menu order ---
 	// 0.9.9: use single keyed array for menu items
 	ksort( $menua );
@@ -349,7 +396,14 @@ function adminsanity_menu_split_order( $menu_order ) {
 	}
 
 	// --- debug point ---
-	// print_r( $menu_items );
+	// 1.0.3: update debug point output
+	if ( isset( $_GET['as-debug'] ) && in_array( $_GET['as-debug'], array( 'all', 'menu' ) ) ) {
+		echo '<span style="display:none;">[AdminSanity]';
+		echo 'Sorted Menu Items A: ' . esc_html( print_r( $menu_items['a'], true ) ) . "\n";
+		echo 'Sorted Menu Items B: ' . esc_html( print_r( $menu_items['b'], true ) ) . "\n";
+		echo 'Sorted Menu Items C: ' . esc_html( print_r( $menu_items['c'], true ) ) . "\n";
+		echo '</span>';
+	}
 
 	// --- get meta menu setting ---
 	$meta_menus = true;
@@ -387,7 +441,9 @@ function adminsanity_menu_split_order( $menu_order ) {
 	$meta_menu_order = array( 'a', 'b', 'c' );
 	$meta_menu_order = apply_filters( 'adminsanity_menu_meta_order', $meta_menu_order );
 	if ( $meta_menu_order && is_array( $meta_menu_order ) ) {
-		$new_menu_order = array();
+		// 1.0.3: insert top menu items first
+		// $new_menu_order = array();
+		$new_menu_order = $menutop;
 		foreach ( $meta_menu_order as $i => $key ) {
 			$key = strtolower( $key );
 			if ( array_key_exists( $key, $menu_items ) ) {
@@ -408,6 +464,7 @@ function adminsanity_menu_split_order( $menu_order ) {
 		// 1.0.0: explicitly validate GET value
 		if ( isset( $_GET['as-debug'] ) && in_array( $_GET['as-debug'], array( 'all', 'menu' ) ) ) {
 			echo '<span style="display:none;">[AdminSanity] Menu Order:' . esc_html( print_r( $menu_order, true ) ) . '</span>' . "\n";
+			print_r( get_defined_constants() );
 		}
 	}
 
@@ -417,7 +474,6 @@ function adminsanity_menu_split_order( $menu_order ) {
 // -----------------
 // Admin Menu Styles
 // -----------------
-add_action( 'admin_print_styles', 'adminsanity_menu_styles');
 function adminsanity_menu_styles() {
 
 	// --- set admin menu styles ---
@@ -559,8 +615,8 @@ function adminsanity_menu_styles() {
 		// - menu headings -
 		// 0.9.9 copy other color scheme rules explicitly via javascript
 		if ( 'fresh' == $scheme ) {
-			// #444444
-			$css .= '.adminsanity-menu-heading {color: #FFF;}' . "\n";
+			// 1.0.3: set background color explicitly for non-current menu heading
+			$css .= '.adminsanity-menu-heading {background-color: #1d2327; color: #FFF;}' . "\n";
 			$css .= '.adminsanity-menu-wrapper.current-meta .adminsanity-menu-heading {background-color: #0073aa !important;}' . "\n";
 		}
 		$css .= '.adminsanity-menu-heading {';
@@ -619,7 +675,6 @@ function adminsanity_menu_styles() {
 // ------------------
 // 0.9.6: add meta menu creation script
 // 0.9.9: add full page expanded menu creation script
-add_action( 'admin_footer', 'adminsanity_menu_scripts', 99 );
 function adminsanity_menu_scripts() {
 
 	global $adminsanity;
@@ -769,7 +824,7 @@ function adminsanity_menu_scripts() {
 		// --- localize translation for expand/collapse ---
 		$js .= "var as_expand_menu = '" . esc_js( __( 'Expand Menu', 'adminsanity' ) ) . "'; ";
 		$js .= "var as_collapse_menu = '" . esc_js( __( 'Collapse Menu', 'adminsanity' ) ) . "'; ";
-		$js .= "var as_menu_added = false; " . "\n";
+		$js .= "var as_menu_added = false; var as_menu_adding = false; var as_delayed_menu = false;" . "\n";
 
 		// --- add expand menu item to admin menu ---
 		// TODO: optimize element adding using jQuery ?
@@ -780,11 +835,10 @@ function adminsanity_menu_scripts() {
 		el.insertBefore(expand, el.childNodes[0] || null);" . "\n";
 
 			// --- create button to expand menu page ---
-			// TODO: aria-label, aria-expanded ?
-			// <button type="button" id="expand-button" aria-label="Collapse Main menu" aria-expanded="true"
 			$js .= "button = document.createElement('button');
-			button.setAttribute('type', 'button');
-			button.setAttribute('id', 'expand-button');" . "\n";
+			button.setAttribute('id', 'expand-button');
+			button.setAttribute('aria-label', as_expand_menu);
+			button.setAttribute('aria-expanded', 'false');" . "\n";
 
 			// --- button icon ---
 			// <span class="collapse-button-icon" aria-hidden="true">
@@ -805,26 +859,37 @@ function adminsanity_menu_scripts() {
 
 		// --- add expanded toggle function ---
 		$js .= "function adminsanity_menu_toggle() {
-			if (!as_menu_added) {adminsanity_menu_load();}
+			if (!as_menu_added) {
+				if (as_menu_adding) {var as_delayed_menu = setInterval(adminsanity_menu_delayed_toggle, 500); return;}
+				else {adminsanity_menu_load();}
+			}
 			if (document.getElementById('adminsanity-menu-page').style.display == 'none') {
 				document.getElementById('wpbody-content').style.display = 'none';
 				document.getElementById('adminsanity-menu-page').style.display = '';
 				document.getElementById('adminsanity-toggle-label').innerHTML = as_collapse_menu; /* 'Collapse Menu' */
+				document.getElementById('expand-button').setAttribute('aria-expanded','true');
 				/* if (jQuery('#collapse-menu').attr('aria-expanded') == 'true') {jQuery('#collapse-menu').click();} */
 				jQuery('body').addClass('folded'); jQuery('#expand-button').addClass('expanded');
-				jQuery('#adminsanity-notices-clear').prependTo('#adminsanity-menu-page');
+				/* jQuery('#adminsanity-notices-clear').prependTo('#adminsanity-menu-page');
 				jQuery('#adminsanity-notices-wrap').prependTo('#adminsanity-menu-page');
-				jQuery('#adminsanity-notices-menu').prependTo('#adminsanity-menu-page');
+				jQuery('#adminsanity-notices-menu').prependTo('#adminsanity-menu-page'); */
 			} else {
 				document.getElementById('adminsanity-menu-page').style.display = 'none';
 				document.getElementById('wpbody-content').style.display = '';
 				document.getElementById('adminsanity-toggle-label').innerHTML = as_expand_menu; /* 'Expand Menu' */
 				/* if (jQuery('#collapse-menu').attr('aria-expanded') == 'false') {jQuery('#collapse-menu').click();} */
 				jQuery('body').removeClass('folded'); jQuery('#expand-button').removeClass('expanded');
-				jQuery('#adminsanity-notices-wrap').insertAfter('#admin-top-general-notices');
+				/* jQuery('#adminsanity-notices-wrap').insertAfter('#admin-top-general-notices');
 				jQuery('#adminsanity-notices-clear').insertAfter('#admin-top-general-notices');
-				jQuery('#adminsanity-notices-menu').insertAfter('#admin-top-general-notices');
+				jQuery('#adminsanity-notices-menu').insertAfter('#admin-top-general-notices'); */
 			}
+		}" . "\n";
+
+		// --- delayed toggle cycler ---
+		// 1.0.3: added to catch delayed menu load
+		$js .= "function adminsanity_menu_delayed_toggle() {
+			if (as_menu_debug) {console.log('Waiting for expanded menu page to load...');}
+			if (as_menu_added) {clearInterval(as_delayed_menu); adminsanity_menu_toggle();}
 		}" . "\n";
 
 		// --- toggle menu state ---
@@ -873,20 +938,26 @@ function adminsanity_menu_scripts() {
 		// --- dynamic creation of menu ---
 		$js .= "function adminsanity_menu_load() {" . "\n";
 
+			// 1.0.3: added check of menu added/adding flags
+			$js .= "if (as_menu_added || as_menu_adding) {return;}" . "\n";
+			$js .= "as_menu_adding = true;" . "\n";
+
 			// --- set menu added flag ---
-			$js .= "as_menu_added = true;" . "\n";
 			$js .= "as_menu_background = jQuery('#adminmenuwrap').css('background-color'); " . "\n";
 
 			// --- create new page div ---
-			// TODO: optimize by using jQuery ?
-			$js .= "pagediv = document.createElement('div');
+			// 1.0.3: optimized page adding using jQuery
+			$js .= "menupage = jQuery('<div>').attr('id', 'adminsanity-menu-page').css('display','none');
+			menupage.prependTo('#wpbody');" . "\n";
+			// jQuery('#wpbody').append(menupage);" . "\n";
+			/* $js .= "pagediv = document.createElement('div');
 			pagediv.setAttribute('id', 'adminsanity-menu-page');
 			pagediv.setAttribute('style', 'display:none;');
 			el = document.getElementById('wpbody');
-			el.insertBefore(pagediv, el.childNodes[0] || null);" . "\n";
+			el.insertBefore(pagediv, el.childNodes[0] || null);" . "\n"; */
 
 			// --- dynamic creation of menu wrappers ---
-			// TODO: optimize menu creation using jQuery
+			// TODO: optimize menu creation using jQuery ?
 			// 0.9.9: loop using key/label javascript array instead of PHP
 			// $i = 0;
 			// foreach ( $labels as $key => $label ) {
@@ -991,12 +1062,11 @@ function adminsanity_menu_scripts() {
 
 			// --- fix hover styles ---
 			// (color, background-color)
-			// note: ## used for exact selector match
+			// note: ## is used for exact selector match
 			$selectors = array(
 				'##adminmenu li>a.menu-top:focus',
 				'##adminmenu .wp-submenu a:focus',
 				'##adminmenu .wp-submenu a:hover',
-
 				'##adminmenu a:hover',
 				'##adminmenu li.menu-top:hover',
 				'##adminmenu li.opensub>a.menu-top',
@@ -1038,6 +1108,9 @@ function adminsanity_menu_scripts() {
 				// }
 			// }
 
+			// 1.0.3: move flag set to end of function
+			$js .= "as_menu_added = true; as_menu_adding = false;" . "\n";
+
 		// --- close load menu function ---
 		$js .= '}' . "\n";
 
@@ -1046,7 +1119,8 @@ function adminsanity_menu_scripts() {
 	// Document Ready Script
 	// ---------------------
 	
-	$readyjs = '';
+	// --- open document ready function ---
+	$readyjs = "jQuery(document).ready(function() {" . "\n";
 
 	if ( $meta_menus ) {
 
@@ -1099,21 +1173,35 @@ function adminsanity_menu_scripts() {
 	// 0.9.9: added for expanded full page menu
 	if ( $expander ) {
 
-		// --- open document ready function ---
-		$readyjs .= "jQuery(document).ready(function() {" . "\n";
-
-
 		// --- delayed auto-load of menu ---
-		$readyjs .= "setTimeout(adminsanity_menu_load, 1000);" . "\n";
+		// 1.0.3: remove autoload of expanded menu for speed (loads fine on click)
+		// $readyjs .= "setTimeout(adminsanity_menu_load, 1000);" . "\n";
 
 		// --- clone admin menu item  ---
 		$readyjs .= "jQuery('#wp-admin-bar-menu-toggle').clone()" . "\n";
 		$readyjs .= ".attr('id','wp-admin-bar-expand-toggle').attr('class','admin-bar-extra-menu')" . "\n";
 		$readyjs .= ".attr('onclick','adminsanity_menu_toggle();').insertAfter('#wp-admin-bar-menu-toggle');" . "\n";
+		$readyjs .= "jQuery('#expand-button').on('mouseover', function() {adminsanity_menu_load();});" . "\n";
 
-		// --- close document ready functions ---
-		$readyjs .= "});" . "\n";
+		// 1.0.3: test collapse button remains working?
+		$readyjs .= "jQuery('#collapse-button').on('click',function(e) {
+			console.log(e);
+			/* e.preventDefault();
+			setTimeout(function() {
+				if (jQuery('body').hasClass('folded')) {
+					jQuery('body').removeClass('folded');
+					jQuery('#collapse-button').attr('aria-expanded','true');
+				} else {
+					jQuery('body').addClass('folded');
+					jQuery('#collapse-button').attr('aria-expanded','false');
+				}
+			}, 500); */
+		});" . "\n";
+
 	}
+
+	// --- close document ready functions ---
+	$readyjs .= "});" . "\n";
 
 
 	// Style Rule Fixes
@@ -1314,14 +1402,27 @@ function adminsanity_menu_admin_reorder( $order ) {
 	return $order;
 }
 
+// -------------------------
+// Top Menu Positions Filter
+// -------------------------
+// (array of menu item names to move above megamenus automatically)
+add_filter( 'adminsanity_menu_top_positions', 'adminsanity_menu_top_positions_test', 9 );
+function adminsanity_menu_top_positions_test( $top ) {
+
+	// 1.0.3: merge in top level items for WordPress.Com
+	return array_merge( $top, array( 'https://wordpress.com/sites', site_url() ) );
+}
+
 // ---------------------------
 // Test Keep Menu Order Filter
 // ---------------------------
 // (array of menu item names to not to reprder/move automatically)
 add_filter( 'adminsanity_menu_keep_positions', 'adminsanity_menu_keep_position_test', 9 );
 function adminsanity_menu_keep_position_test( $keep ) {
+	
 	// note: prototasq slug is used as an example here to maintain first position (for project management)
 	return array_merge( $keep, array( 'prototasq' ) );
+
 }
 
 // --- end load wrapper ---

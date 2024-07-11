@@ -58,11 +58,16 @@ if ( defined( 'ADMINSANITY_LOAD_BAR' ) && !ADMINSANITY_MODULE_LOAD_BAR ) {
 	return;
 }
 
+// 1.0.3: bug out if on WordPress.Com (custom/no admin bar)
+if ( defined( 'WPCOMSH_VERSION' ) ) {
+	return;
+}
+
 // --- get frontend override setting ---
 // 0.9.9: added frontend override setting
 if ( !is_admin() ) {
 	$frontend = true;
-	// 1.0.1: fix to frontent constant (remove CYCLER_)
+	// 1.0.1: fix to frontend constant (remove CYCLER_)
 	if ( defined( 'ADMINSANITY_BAR_FRONTEND' ) ) {
 		$frontend = (bool) ADMINSANITY_BAR_FRONTEND;
 	} elseif ( function_exists( 'adminsanity_get_setting' ) ) {
@@ -85,6 +90,9 @@ if ( isset( $_REQUEST['page'] ) && ( 'product_attributes' == $_REQUEST['page'] )
 // 0.9.9: attempt to prevent double load conflicts
 // 1.0.1: use return instead of function wrapper
 if ( !function_exists( 'adminsanity_bar_default' ) ) {
+
+// note: unlike menu/notices, loader is not needed for scripts/styles
+// as they are already hooked to admin bar rendering actions
 
 
 // -------------------------
@@ -155,7 +163,7 @@ function adminsanity_bar_default() {
 // ------------------
 // Current Screen Fix
 // ------------------
-// since admin_bar_init is hooked to admin_init, current screen object is not loaded
+// since admin_bar_init is hooked to admin_init, current screen object is not yet loaded
 // which gives current_screen->base property not exists errors in wp_admin_bar_edit_menu (/wp-includes/admin-bar.php)
 // ...so this duplicates admin.php current screen initialization to fix that (yeesh)
 function adminsanity_current_screen_fix() {
@@ -170,10 +178,13 @@ function adminsanity_current_screen_fix() {
 	// --- check current screen ---
 	$current_screen = get_current_screen();
 	if ( $adminsanity['bar-debug'] ) {
-		echo '<span id="current-screen-test" style="display:none;">Current Screen A:' . esc_html( print_r( $current_screen, true ) ) . '</span>' . "\n";
+		echo '<span class="current-screen-test" style="display:none;">Current Screen A:' . esc_html( print_r( $current_screen, true ) ) . '</span>' . "\n";
 	}
 	if ( !is_object( $current_screen ) || !property_exists( $current_screen, 'base' ) ) {
-		global $pagenow;
+		
+		global $pagenow, $page_hook, $typenow;
+		// 1.0.3: fix to set global for plugin_page and hook_suffix ?
+		// global $plugin_page, $hook_suffix;
 		if ( isset( $_GET['page'] ) ) {
 			// 1.0.0: use sanitize_title on GET value
 			$plugin_page = sanitize_title( wp_unslash( $_GET['page'] ) );
@@ -191,17 +202,19 @@ function adminsanity_current_screen_fix() {
 		} else {
 			$typenow = '';
 		}
+
 		if ( isset( $plugin_page ) ) {
 			if ( !empty( $typenow ) ) {
 				$the_parent = $pagenow . '?post_type=' . $typenow;
 			} else {
 				$the_parent = $pagenow;
 			}
-			if ( ! $page_hook = get_plugin_page_hook( $plugin_page, $the_parent ) ) {
+			if ( !$page_hook = get_plugin_page_hook( $plugin_page, $the_parent ) ) {
 				$page_hook = get_plugin_page_hook( $plugin_page, $plugin_page );
 			}
 			unset( $the_parent );
 		}
+
 		$hook_suffix = '';
 		if ( isset( $page_hook ) ) {
 			$hook_suffix = $page_hook;
@@ -211,20 +224,34 @@ function adminsanity_current_screen_fix() {
 			$hook_suffix = $pagenow;
 		}
 
+		if ( $adminsanity['bar-debug'] ) {
+			echo '<span style="display:none;">Hook Suffix: ' . $hook_suffix . '</span>' . "\n";
+			echo '<span style="display:none;">Pagenow: ' . $pagenow . '</span>' . "\n";
+			echo '<span style="display:none;">Plugin Page: ' . $plugin_page . '</span>' . "\n";
+			echo '<span style="display:none;">Page Hook: ' . $page_hook . '</span>' . "\n";
+		}
+	
 		// --- set current screen ---
 		// we cannot use function set_current_screen directly as this calls set_current_screen action
 		// this causes conflicts on classes loaded via set_current_screen action
 		// eg. WooCommerce Screen class, but possibly with other plugins hooking to that action
 		// set_current_screen( $pagenow );
 		// so instead we duplicate function WP_Screen->set_current_screen but without firing the action
-		global $current_screen, $taxnow, $typenow, $post;
-		$current_screen = WP_Screen::get( $pagenow );
-		$taxnow = $current_screen->taxonomy;
-		$typenow = $current_screen->post_type;
+		global $current_screen; // $taxnow, $typenow;
+		$current_screen = WP_Screen::get( $hook_suffix );
+		// 1.0.3: disabled these as causing some template editor problems
+		// $taxnow = $current_screen->taxonomy;
+		// $typenow = $current_screen->post_type;
+
+		if ( $adminsanity['bar-debug'] ) {
+			echo '<span style="display:none;">Taxonomy: ' . $current_screen->taxonomy . '</span>' . "\n";
+			echo '<span style="display:none;">Post Type: ' . $current_screen->post_type . '</span>' . "\n";
+		}
 
 		// 1.0.2: fix for undefined post->post_type, also in wp_admin_bar_edit_menu
 		// (base is now set, but post object may not yet be set on post edit pages)
 		if ( 'post' == $current_screen->base ) {
+			global $post;
 			$post = get_post();
 			if ( !is_object( $post ) && isset( $_REQUEST['post'] ) ) {
 				$post = get_post( absint( $_REQUEST['post'] ) );
@@ -232,10 +259,10 @@ function adminsanity_current_screen_fix() {
 		}
 			
 	}
+
 	if ( $adminsanity['bar-debug'] ) {
-		$current_screen = get_current_screen();
-		$post = get_post();
-		echo '<span id="current-screen-test" style="display:none;">Current Screen B: ' . esc_html( print_r( $current_screen, true ) ) .  '</span>' . "\n";
+		// $current_screen = get_current_screen();
+		echo '<span class="current-screen-test" style="display:none;">Current Screen B: ' . esc_html( print_r( $current_screen, true ) ) .  '</span>' . "\n";
 	}
 }
 
