@@ -43,8 +43,23 @@ if ( defined( 'ADMINSANITY_LOAD_NOTICES' ) && !ADMINSANITY_LOAD_NOTICES ) {
 // --- allow for use as an mu plugin ---
 // 0.9.9: attempt to prevent double load conflicts
 // 1.0.1: use return instead of function wrapper
-if ( !function_exists( 'adminsanity_notices_message_levels' ) ) {
+if ( !function_exists( 'adminsanity_notices_loader' ) ) {
 
+// ---------------------
+// Notices Loader Action
+// ---------------------
+// 1.0.3: added loader action to avoid block editor conflicts
+add_action( 'admin_init', 'adminsanity_notices_loader' );
+function adminsanity_notices_loader() {
+
+	// --- check for block editor page ---
+	// 1.0.3: moved internally as flag may note have been set before admin_init
+
+	// --- enqueue scripts and styles ---
+	add_action( 'admin_print_styles', 'adminsanity_notices_styles' );
+	add_action( 'admin_footer', 'adminsanity_notices_scripts' );
+	
+}
 
 // ------------------
 // Get Message Levels
@@ -70,13 +85,17 @@ function adminsanity_notices_message_types() {
 	// 0.9.8: add classes subarray values
 	// 0.9.9: added notice-error message class
 	// 0.9.9: added woocmmerce message type
+	// 1.0.3: added e-notice class for elementor notices
+	// 1.0.3: change notice info label from Notice to Info
+	// 1.0.3: added woocommerce-store-alerts class
+	// 1.0.3: added amp-admin-notice class to warnings
 	$mtypes = array(
 		'error'          => array( 'classes' => 'notice-error error', 'label' => __( 'Errors', 'adminsanity' ) ),
 		'update-nag'     => array( 'classes' => 'update-nag', 'label' => __( 'Updates', 'adminsanity' ) ),
-		'notice-warning' => array( 'classes' => 'notice-warning', 'label' => __( 'Warnings', 'adminsanity' ) ),
+		'notice-warning' => array( 'classes' => 'notice-warning amp-admin-notice', 'label' => __( 'Warnings', 'adminsanity' ) ),
 		'updated'        => array( 'classes' => 'notice-success updated', 'label' => __( 'Messages', 'adminsanity' ) ),
-		'notice-info'    => array( 'classes' => 'notice-info', 'label' => __( 'Notices', 'adminsanity' ) ),
-		'commerce'       => array( 'classes' => 'woocommerce-message', 'label' => __( 'Commerce', 'adminsanity') ),
+		'notice-info'    => array( 'classes' => 'notice-info e-notice', 'label' => __( 'Info', 'adminsanity' ) ),
+		'commerce'       => array( 'classes' => 'woocommerce-message woocommerce-store-alerts', 'label' => __( 'Commerce', 'adminsanity') ),
 	);
 	$mtypes = apply_filters( 'adminsanity_notices_message_types', $mtypes );
 	return $mtypes;
@@ -137,13 +156,14 @@ function adminsanity_notices_all_end() {
 	
 	// --- notices menu ---
 	// 0.9.9: add initial collapsed class
-	echo '<div id="adminsanity-notices-menu" class="postbox collapsed">';
+	// 1.0.3: change possibly conflicting postbox class
+	echo '<div id="adminsanity-notices-menu" class="adminsanity-postbox collapsed">';
 
 	// --- notices menu title ---
 	echo '<h3 class="adminsanity-notices-title" onclick="adminsanity_notices_toggle();">';
+		echo '<div id="adminsanity-notices-arrow">&#9662;</div>';
 		echo '<div id="adminsanity-notices-label">' . esc_html( __( 'Notices', 'adminsanity' ) ) . ' &nbsp;</div>';
 		echo '<div id="adminsanity-notices-count" class="adminsanity-notices-count"></div>';
-		echo '<div id="adminsanity-notices-arrow">&#9662;</div>';
 	echo '</h3>';
 
 	// --- notice type menu ---
@@ -200,8 +220,18 @@ function adminsanity_notices_all_end() {
 // --------------
 // Notices Styles
 // --------------
-add_action( 'admin_print_styles', 'adminsanity_notices_styles' );
 function adminsanity_notices_styles() {
+
+	// --- check for block editor page ---
+	// 1.0.3: moved internally as flag may note have been set by admin_init
+	if ( function_exists( 'get_current_screen' ) ) {
+		$current_screen = get_current_screen();
+		if ( method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor() ) {
+			return;
+		}
+	} elseif ( function_exists( 'is_gutenberg_page' ) && is_gutenberg_page() ) {
+		return;
+	}
 
 	// TODO: get count bubble styles for colour scheme ?
 
@@ -211,19 +241,20 @@ function adminsanity_notices_styles() {
 	// 0.9.9: improve specificity for h3 adminsanity-notices-title
 	// 0.9.9: added commerce message type tab styles
 	// 0.9.9: style/float notices box like screen options/help
+	// 1.0.3: move left and re-centered vertical arrow position
 	$css = "#adminsanity-notices-menu {float: left; margin-bottom: 0; min-width: auto; border-radius: 0 0 4px 4px;}
+	.adminsanity-postbox {position: relative; min-width: 255px; border: 1px solid #c3c4c7; box-shadow: 0 1px 1px rgba(0, 0, 0, .04); background: #fff;}
 	#wpbody h3.adminsanity-notices-title {
-	    cursor:pointer; margin: 0; padding: 2px 14px; display: inline-block; vertical-align:top;
-	    color: #72777c; font-size: 14px; font-weight: normal;}
+	    display: inline-block; vertical-align: top; margin: 0; padding: 2px 10px; margin-top: -3px;
+	    color: #72777c; font-size: 14px; font-weight: normal; cursor: pointer;}
 	#wpbody h3.adminsanity-notices-title:hover {color: #32373c;}
 	#adminsanity-notices-label, #adminsanity-notices-count, #adminsanity-notices-arrow {display: inline-block; vertical-align: middle;}
-	#adminsanity-notices-arrow {font-size: 24px; line-height: 28px; color: #72777c; margin-top: -3px;}
-	#adminsanity-notices-menu.expanded #adminsanity-notices-arrow {margin-bottom: 3px;}
-	.adminsanity-notices-menu {display: none; margin: 2px 7px 0px 7px; padding: 0 1px 4px 1px; min-width: 65px; 
+	#adminsanity-notices-arrow {font-size: 24px; line-height: 28px; color: #72777c; margin-right: 5px;}
+	.adminsanity-notices-menu {display: none; margin: 2px 7px 0px 7px; padding: 0 1px 4px 1px; min-width: 75px; 
 	    text-align: center; font-size: 12px; line-height: 16px; border-left: 1px solid transparent; border-right: 1px solid transparent;}
-	.adminsanity-notices-menu.level {min-width: 45px; margin-top: 0px; padding-top: 4px;}
+	.adminsanity-notices-menu.level {margin-top: 0px; min-width: 55px;}
 	.adminsanity-notices-menu.active {background-color: #F7F7F7; border-left: 1px solid #ccc; border-right: 1px solid #ccc;}
-	.adminsanity-notices-menu.level.active {border-top: 1px solid #ccc;}
+	.adminsanity-notices-menu.level.active {border-top: 3px solid #ccc;}
 	.adminsanity-notices-menu:hover {background-color: #FAFAFA;}
 	.adminsanity-notices-menu a {cursor: pointer; vertical-align: middle;}
 	.adminsanity-notices-menu-spacer {display: none; width: 10px;}
@@ -253,8 +284,18 @@ function adminsanity_notices_styles() {
 // ---------------
 // Notices Scripts
 // ---------------
-add_action( 'admin_footer', 'adminsanity_notices_scripts' );
 function adminsanity_notices_scripts() {
+
+	// --- check for block editor or gutenberg plugin page ---
+	// 1.0.3: moved internally as flag may note have been set before admin_init
+	if ( function_exists( 'get_current_screen' ) ) {
+		$current_screen = get_current_screen();
+		if ( method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor() ) {
+			return;
+		}
+	} elseif ( function_exists( 'is_gutenberg_page' ) && is_gutenberg_page() ) {
+		return;
+	}
 
 	$js = '';
 
@@ -321,6 +362,8 @@ function adminsanity_notices_scripts() {
 
 	// 0.9.8: fix for extra notice-success class
 	// 0.9.9: fix to handle multiple classes dynamically
+	// 1.0.3: do not float right on collapse click
+	// 1.0.3: style fix to centralize up/down arrow
 	$js .= "for (i = 0; i < as_notice_levels.length; i++) {
 		if (as_notice_levels[i] != 'all') {
 			count = jQuery('#adminsanity-'+as_notice_levels[i]+'-notices').children('div').length;
@@ -352,19 +395,21 @@ function adminsanity_notices_scripts() {
 	function adminsanity_notices_toggle() {
 		if (jQuery('#adminsanity-notices-menu').hasClass('expanded')) {
 			jQuery('#adminsanity-notices-menu').removeClass('expanded').addClass('collapsed');
-			jQuery('#adminsanity-notices-menu').css('float','right');
+			/* jQuery('#adminsanity-notices-menu').css('float','right'); */
 			jQuery('#adminsanity-notices-count').show();
 			jQuery('#adminsanity-notices-wrap').animate({'height':'0px'},750);
 			as_notices_height = 0;
 			jQuery('#adminsanity-notices-arrow').html('&#9662;');
-			jQuery('.adminsanity-notices-menu, .adminsanity-notices-menu-spacer').hide();
+			/* jQuery('.adminsanity-notices-menu, .adminsanity-notices-menu-spacer').hide(); */
+			jQuery('.adminsanity-notices-menu.level').hide();
 		} else {
 			jQuery('#adminsanity-notices-menu').removeClass('collapsed').addClass('expanded');
-			jQuery('#adminsanity-notices-menu').css('float','left');
+			/* jQuery('#adminsanity-notices-menu').css('float','left'); */
 			jQuery('#adminsanity-notices-count').hide();
 			adminsanity_notices_height(1500);
 			jQuery('#adminsanity-notices-arrow').html('&#9652;');
-			jQuery('.adminsanity-notices-menu, .adminsanity-notices-menu-spacer').css('display','inline-block');
+			/* jQuery('.adminsanity-notices-menu, .adminsanity-notices-menu-spacer').css('display','inline-block'); */
+			jQuery('.adminsanity-notices-menu.level').css('display','inline-block');
 		}
 	}
 	function adminsanity_notices_height(speed) {
