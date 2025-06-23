@@ -530,11 +530,13 @@ function adminsanity_bar_styles() {
 // Admin Bar Scripts
 // -----------------
 // 0.9.9: emqueue scripts with wp_after_admin_bar_render hook
-add_action( 'wp_after_admin_bar_render', 'adminsanity_bar_enqueue_scripts' );
-function adminsanity_bar_enqueue_scripts() {
-	add_action( 'admin_footer', 'adminsanity_bar_scripts' );
-	add_action( 'wp_footer', 'adminsanity_bar_scripts' );
-}
+// add_action( 'wp_after_admin_bar_render', 'adminsanity_bar_enqueue_scripts' );
+// function adminsanity_bar_enqueue_scripts() {
+//	add_action( 'admin_footer', 'adminsanity_bar_scripts' );
+//	add_action( 'wp_footer', 'adminsanity_bar_scripts' );
+// }
+// 1.0.4: do not enqueue as too late for frontend
+add_action( 'wp_after_admin_bar_render', 'adminsanity_bar_scripts' );
 function adminsanity_bar_scripts() {
 
 	$js = '';
@@ -635,10 +637,6 @@ function adminsanity_bar_scripts() {
 			}
 		});
 	}" . "\n";
-
-	if ( !$cycler && !$dropdown ) {
-		return;
-	}
 
 	// --- bar cycler script ---
 	// 0.9.9 add check for dropdown bar_responsive function
