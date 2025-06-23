@@ -3,8 +3,8 @@ Contributors: majick
 Donate link: https://wpmedic.tech
 Tags: wordpress admin, admin menu, admin notices, admin bar, cleaner
 Requires at least: 4.0.0
-Tested up to: 6.5.5
-Stable tag: 1.0.3
+Tested up to: 6.8.1
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -122,6 +122,10 @@ Yes. Although tricky, a filter for this was included in the initial proof of con
 == Screenshots ==
 
 == Changelog ==
+
+= 1.0.4 =
+* Updated: Plugin Panel (1.3.5)
+* Fixed: Admin Bar Frontend module loading option key
 
 = 1.0.3 =
 * Improved: do not load Menu/Notices on Block Editor pages
